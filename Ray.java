@@ -30,7 +30,7 @@ public class Ray {
         if(max_bounce == 0)
             return new Vec(0f, 0f, 0f);
         
-        HitRecord hit = obj.hit(this, 0, Float.MAX_VALUE);
+        HitRecord hit = obj.hit(this, 0.0001f, Float.MAX_VALUE);
         
         if( hit != null ){
             Ray scattered = hit.material.scatter(this, hit);

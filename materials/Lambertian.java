@@ -14,13 +14,6 @@ public class Lambertian extends Material {
     
     @Override
     public Ray scatter(Ray r, HitRecord rec) {
-        
-        // random point in unit sphere
-        Vec random_point;
-        do {            
-            random_point = new Vec(2f*(float)Math.random()-1f, 2f*(float)Math.random()-1f, 2f*(float)Math.random()-1f);
-        } while (random_point.dot(random_point) >= 1f);
-        
-        return new Ray(rec.p, rec.normal.add(random_point), albedo);
+        return new Ray(rec.p, rec.normal.add(Vec.randomPointInSphere()), albedo);
     }
 }

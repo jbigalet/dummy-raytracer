@@ -10,6 +10,15 @@ public class Vec {
         v = new float[] {a, b, c};
     }
     
+    public static Vec randomPointInSphere() {
+        // random point in unit sphere
+        Vec random_point;
+        do {            
+            random_point = new Vec(2f*(float)Math.random()-1f, 2f*(float)Math.random()-1f, 2f*(float)Math.random()-1f);
+        } while (random_point.dot(random_point) >= 1f);
+        return random_point;
+    }
+    
     public float x() { return v[0]; }
     public float y() { return v[1]; }
     public float z() { return v[2]; }
