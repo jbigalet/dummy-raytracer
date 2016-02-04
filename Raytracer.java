@@ -4,8 +4,11 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.SynchronousQueue;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.Timer;
@@ -16,12 +19,14 @@ import raytracer.objects.Sphere;
 
 public class Raytracer extends JPanel {
 
+    static int nthread = 8;
+    
 //    static int width = 200;
 //    static int height = 100;
 //    static int zoom = 4;
     
-    static int width = 1000;
-    static int height = 500;
+    static int width = 2400;
+    static int height = 1200;
     static int zoom = 1;
 
     static int gamma = 2;
@@ -66,15 +71,33 @@ public class Raytracer extends JPanel {
 //        world.add(new Sphere(new Vec(-1.5f, 0f, -2f), 0.5f, new Metal(new Vec(0.8f, 0.8f, 0.8f))));
 //        world.add(new Sphere(new Vec(0f, 5f, 0f), 0.5f, new Lambertian(new Vec(0.1f, 0.1f, 0.8f))));
         
-        for(int i=0 ; i<30 ; i++)
-            world.add(new Sphere(new Vec(5f-10f*(float)Math.random(), 0f, -8f*(float)Math.random()),
-                    0.3f + 0.5f*(float)Math.random(),
-                    Math.random() > 0.2 ?
+        for(int i=0 ; i<20 ; i++)
+            world.add(new Sphere(
+                    new Vec(
+                        3f-6f*(float)Math.random(), // x
+                        0f,      // y
+                        -8f*(float)Math.random()     // z
+                    ),
+
+                    0.5f, // radius
+                    
+                    Math.random() > 0.4 ?             // mat
                               new Lambertian(new Vec((float)Math.random(), (float)Math.random(), (float)Math.random()))
                             : new Metal(     new Vec((float)Math.random(), (float)Math.random(), (float)Math.random()))));
 
+        ArrayBlockingQueue<Point> pixelQueue = new ArrayBlockingQueue(width*height);
         for(int i=0 ; i<width ; i++)
             for(int j=0 ; j<height ; j++)
-                screen[i][j] = camera.getColorWithAntialiasing(world, i, j, 100, 100).toRGB(gamma);
+                pixelQueue.add(new Point(i, j));
+        
+        for(int i=0 ; i<nthread ; i++)
+            new Thread() {
+                public void run() {
+                    while( !pixelQueue.isEmpty() ){
+                        Point pixel = pixelQueue.poll();
+                        screen[pixel.x][pixel.y] = camera.getColorWithAntialiasing(world, pixel.x, pixel.y, 100, 100).toRGB(gamma);
+                    }
+                }
+            }.start();
     }
 }
