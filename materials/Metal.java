@@ -10,11 +10,13 @@ public class Metal extends Material {
     public float fuzz;
 
     public Metal(Vec albedo) {
+        this.light = false;
         this.albedo = albedo;
         this.fuzz = 0f;
     }
 
     public Metal(Vec albedo, float fuzz) {
+        this.light = false;
         this.albedo = albedo;
         this.fuzz = fuzz;
     }

@@ -37,11 +37,14 @@ public class Ray {
             if( scattered != null )
                 return scattered.color(obj, max_bounce-1).mul(scattered.attenuation);
             else
-                return new Vec(0f, 0f, 0f);
+                return hit.material.light ? new Vec(1f, 1f, 1f) : new Vec(0f, 0f, 0f);
         }
         
-        float t = 0.5f*(dir.unit().y() + 1.0f);
-        return new Vec(1f, 1f, 1f).mul(1f-t).add(new Vec(0.5f, 0.7f, 1.0f).mul(t));
+        return new Vec(0f, 0f, 0f);
+//        float t = 0.5f*(dir.unit().y() + 1.0f);
+//        t = (float)Math.pow(t, 1d/3);
+//        return new Vec(1f, 1f, 1f).mul(1f-t).add(new Vec(0.5f, 0.7f, 1.0f).mul(t));
+//        return new Vec(0.8f, 0.2f, 0.2f).mul(t);
     }
 
 }

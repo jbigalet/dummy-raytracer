@@ -10,6 +10,7 @@ public class Lambertian extends Material {
 
     public Lambertian(Vec albedo) {
         this.albedo = albedo;
+        this.light = false;
     }
     
     @Override
