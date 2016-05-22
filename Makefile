@@ -10,7 +10,7 @@ all: $(OBJ)
 	$(CXX) $(CXXFLAGS) -o $(BIN) $^
 
 run: all
-	$(BIN) > image.ppm
+	$(BIN)
 
 %.o: %.c
 	$(CXX) $@ -c $<

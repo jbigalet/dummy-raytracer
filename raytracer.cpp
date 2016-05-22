@@ -1,16 +1,24 @@
 #include <iostream>
+#include <fstream>
+#include <chrono>
 
 #include "vector.h"
 #include "material.h"
 #include "ray.h"
 #include "object.h"
 #include "camera.h"
+#include "stats.h"
 
 int main() {
+  auto startTime = std::chrono::high_resolution_clock::now();
+
   int width = 200;
   int height = 100;
 
-  std::cout << "P3\n" << width << " " << height << "\n255\n";
+  std::ofstream image;
+  image.open("image.ppm");
+
+  image << "P3\n" << width << " " << height << "\n255\n";
 
   Camera camera(
       width,
@@ -34,6 +42,17 @@ int main() {
       Vector color = camera.getColor(*world, i, j, 100, 100);
 
       int *rgb = color.toRGB(2);
-      std::cout << rgb[0] << " " << rgb[1] << " " << rgb[2] << "\n";
+      image << rgb[0] << " " << rgb[1] << " " << rgb[2] << "\n";
     }
+
+  image.close();
+
+  auto endTime = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double, std::milli> totalTime = endTime - startTime;
+  std::cout << "\nTotal: " << totalTime.count() << " ms\n";
+  std::cout << "\nDirect rays: " << nDirectRay;
+  std::cout << "\nTotal rays: " << nTotalRay << "\n";
+  std::cout << "\nRay per seconds: " << nTotalRay/totalTime.count() << " k\n";
+
+  return 0;
 }

@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <cmath>
 
+#include "stats.h"
+
 class Camera {
   public:
     int width, height;
@@ -40,6 +42,8 @@ class Camera {
                         (x+drand48())/width,
                         (y+drand48())/height
             ).color(obj, max_bounce);
+
+      nDirectRay += nsamples;  // @stats
 
       return color/nsamples;
     }

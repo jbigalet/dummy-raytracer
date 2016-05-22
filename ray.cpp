@@ -2,7 +2,11 @@
 #include "material.h"
 #include "object.h"
 
+extern int nTotalRay;
+
 Vector Ray::color(Object &obj, int max_bounce){
+  nTotalRay++;  // @stats
+
   if(max_bounce == 0)
     return VECTOR_ZERO;
 
