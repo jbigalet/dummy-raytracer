@@ -4,7 +4,6 @@
 #include <math.h>
 
 #include "vector.h"
-#include "object.h"
 
 class Ray;
 
@@ -16,9 +15,11 @@ struct HitRecord {
   Vector normal;
 };
 
+class Material;
 
 class Object {
   public:
+    Material *material;
     virtual HitRecord* hit(Ray ray, float t_min, float t_max) = 0;
 };
 

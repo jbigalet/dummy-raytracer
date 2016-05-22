@@ -1,6 +1,8 @@
 #include <iostream>
 
 #include "vector.h"
+#include "material.h"
+#include "materials/lambertian.h"
 #include "ray.h"
 #include "object.h"
 #include "shapes/sphere.h"
@@ -25,7 +27,7 @@ int main() {
 
       Ray r(origin, lower_left_corner + u*horizontal + v*vertical);
 
-      Sphere sphere(Vector(0, 0, -1), 0.5);
+      Sphere sphere(Vector(0, 0, -1), 0.5, new Lambertian(Vector(1, 0, 1)));
 
       Vector color = r.color(sphere, 100);
       int *rgb = color.toRGB();

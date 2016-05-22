@@ -8,7 +8,10 @@ class Sphere : public Object {
     Vector center;
     float radius;
 
-    Sphere(Vector center, float radius) : center(center), radius(radius) {}
+    Sphere(Vector center, float radius, Material *mat)
+        : center(center), radius(radius) {
+      material = mat;
+    }
 
     HitRecord *hit(Ray ray, float t_min, float t_max) {
       Vector oc = ray.orig - center;

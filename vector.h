@@ -108,7 +108,8 @@ inline Vector operator*(const Vector &v1, const Vector &v2) {
 inline Vector Vector::unit() const { return (*this)/length(); }
 
 
-Vector random_point_in_sphere() {
+inline Vector random_point_in_sphere() {
+  return VECTOR_ZERO;
   Vector random_point;
 
   do {

@@ -2,7 +2,7 @@
 #define DEF_MATERIALS_LAMBERTIAN
 
 #include "../material.h"
-#include "vector.h"
+#include "../vector.h"
 
 class Lambertian : public Material {
   public:
@@ -11,8 +11,8 @@ class Lambertian : public Material {
     Lambertian(Vector albedo) : albedo(albedo) {};
     ~Lambertian() {};
 
-    Ray scatter(Ray r, HitRecord rec){
-      return Ray(rec.p, rec.normal + random_point_in_sphere(), albedo);
+    Ray *scatter(Ray &r, HitRecord &rec){
+      return new Ray(rec.p, rec.normal + random_point_in_sphere(), albedo);
     }
 };
 

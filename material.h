@@ -1,12 +1,12 @@
 #ifndef DEF_MATERIAL
 #define DEF_MATERIAL
 
-#include "ray.h"
 #include "object.h"
+#include "ray.h"
 
 class Material {
   public:
-    virtual Ray scatter(Ray r, HitRecord rec);
+    virtual Ray *scatter(Ray &r, HitRecord &rec) = 0;
 };
 
 #endif /* DEF_MATERIAL */
