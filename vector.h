@@ -2,6 +2,7 @@
 #define DEF_VECTOR
 
 #include <math.h>
+#include <stdlib.h>
 
 #define VECTOR_ZERO Vector(0,0,0)
 #define VECTOR_ONE Vector(1,1,1)
@@ -106,5 +107,21 @@ inline Vector operator*(const Vector &v1, const Vector &v2) {
 
 inline Vector Vector::unit() const { return (*this)/length(); }
 
+
+Vector random_point_in_sphere() {
+  Vector random_point;
+
+  do {
+
+    random_point = Vector(
+        drand48(),
+        drand48(),
+        drand48()
+        );
+
+  } while (random_point%random_point >= 1.0);
+
+  return random_point;
+}
 
 #endif /* DEF_VECTOR */

@@ -19,18 +19,18 @@ class Ray {
 
     Vector point_at_parameter(float t) const { return orig + t*dir; }
 
-    Vector color(Object obj, int max_bounce){
+    Vector color(Object &obj, int max_bounce){
       if(max_bounce == 0)
         return VECTOR_ZERO;
 
-      HitRecord hit = obj.hit(this, 0.001f, FLT_MAX);
+      HitRecord *hit = obj.hit(*this, 0.001f, FLT_MAX);
 
       if(hit != NULL){
-        Ray scattered = hit.material.scatter(this, hit);
+        Ray scattered = obj.material.scatter(this, hit);
         if(scattered != null)
           return scattered.color(obj, max_bounce-1) * scattered.att;
         else
-          return hit.material.light ? VECTOR_ONE : VECTOR_ZERO;
+          return VECTOR_ZERO;
       }
 
       float t = 0.5*(dir.unit().y + 1.0);

@@ -1,6 +1,9 @@
 #include <iostream>
+
 #include "vector.h"
 #include "ray.h"
+#include "object.h"
+#include "shapes/sphere.h"
 
 int main() {
   int width = 200;
@@ -22,7 +25,9 @@ int main() {
 
       Ray r(origin, lower_left_corner + u*horizontal + v*vertical);
 
-      Vector color = r.color();
+      Sphere sphere(Vector(0, 0, -1), 0.5);
+
+      Vector color = r.color(sphere, 100);
       int *rgb = color.toRGB();
 
       std::cout << rgb[0] << " " << rgb[1] << " " << rgb[2] << "\n";
