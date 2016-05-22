@@ -21,13 +21,15 @@ int main() {
       Vector(0, 2, 0)
   );
 
-  /* Sphere *sphere = new Sphere(Vector(0, 0, -1), 0.5, new Lambertian(Vector(0.8, 0.8, 0))); */
-  Sphere *sphere = new Sphere(Vector(0, -1000.5, -1), 1000, new Lambertian(Vector(0.8, 0.8, 0)));
+  ObjectGroup *world = new ObjectGroup();
+
+  world->add( new Sphere(Vector(0, -1000.5, -1), 1000, new Lambertian(Vector(0.8, 0.8, 0))) );
+  world->add( new Sphere(Vector(0, 0, -1), 0.5, new Lambertian(Vector(0.8, 0.3, 0.3))) );
 
   for(int j=height-1 ; j>=0; j--)
     for(int i=0 ; i<width ; i++) {
 
-      Vector color = camera.getColor(*sphere, i, j, 2, 100);
+      Vector color = camera.getColor(*world, i, j, 50, 100);
 
       int *rgb = color.toRGB();
       std::cout << rgb[0] << " " << rgb[1] << " " << rgb[2] << "\n";
