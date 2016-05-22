@@ -27,5 +27,21 @@ class Lambertian : public Material {
     }
 };
 
+class Metal: public Material {
+  public:
+    Vector albedo;
+    float fuzz;
+
+    Metal(Vector albedo, float fuzz) : albedo(albedo), fuzz(fuzz) {};
+    ~Metal() {};
+
+    Ray *scatter(Ray &r, HitRecord &rec){
+      Ray *res = new Ray(rec.p, r.dir.unit() | (rec.normal + fuzz*random_point_in_sphere()), albedo);
+      if( res->dir % rec.normal > 0 )
+        return res;
+      return NULL;
+    }
+};
+
 
 #endif /* DEF_MATERIAL */

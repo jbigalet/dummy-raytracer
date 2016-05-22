@@ -110,6 +110,12 @@ inline Vector operator^(const Vector &v1, const Vector &v2) {
   return Vector(v1.x * v2.x, v1.y * v2.y, v1.z * v2.z);
 }
 
+// reflection
+inline Vector operator|(const Vector &v, const Vector &norm) {
+  return (-2*(v%norm)) * norm;
+}
+
+
 inline Vector Vector::unit() const { return (*this)/length(); }
 
 
