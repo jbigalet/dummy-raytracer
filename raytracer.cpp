@@ -7,18 +7,18 @@
 #include "camera.h"
 
 int main() {
-  int width = 400;
-  int height = 200;
+  int width = 200;
+  int height = 100;
 
   std::cout << "P3\n" << width << " " << height << "\n255\n";
 
   Camera camera(
       width,
       height,
-      Vector(0, 0, 1),
-      Vector(-2, -1, -1),
-      Vector(4, 0, 0),
-      Vector(0, 2, 0)
+      Vector(0, 0.5, 0),
+      Vector(0, 0, -1),
+      Vector(0, 1, 0),
+      90
   );
 
   ObjectGroup *world = new ObjectGroup();
@@ -26,7 +26,7 @@ int main() {
   world->add( new Sphere(Vector(0, -100.5, -1), 100, new Lambertian(Vector(0.8, 0.8, 0))) );
   world->add( new Sphere(Vector(0, 0, -1), 0.5, new Lambertian(Vector(0.8, 0.3, 0.3))) );
   world->add( new Sphere(Vector(1, 0, -1), 0.5, new Metal(Vector(0.8, 0.6, 0.2), 0)) );
-  world->add( new Sphere(Vector(-1, 0, -1), 0.5, new Metal(Vector(0.8, 0.8, 0.8), 0)) );
+  world->add( new Sphere(Vector(-1, 0, -1), 0.5, new Metal(Vector(0.8, 0.8, 0.8), 0.1)) );
 
   for(int j=height-1 ; j>=0; j--)
     for(int i=0 ; i<width ; i++) {

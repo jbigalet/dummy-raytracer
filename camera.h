@@ -2,16 +2,30 @@
 #define DEF_CAMERA 
 
 #include <stdlib.h>
+#include <cmath>
 
 class Camera {
   public:
     int width, height;
     Vector orig, lower_left_corner, hor, ver;
 
-    Camera(int width, int height, Vector orig, Vector lower_left_corner, Vector hor, Vector ver)
-        : width(width), height(height),
-          orig(orig), lower_left_corner(lower_left_corner),
-          hor(hor), ver(ver) {}
+    // vfov = vertical field of view, from top to bottom, in degrees
+    // viewup is the 'up' vector of the camera
+    Camera(int width, int height, Vector orig, Vector lookat, Vector viewup, float vfov)
+           : width(width), height(height), orig(orig) {
+
+      float theta = vfov*M_PI/180;
+      float half_height = tan(theta/2);
+      float half_width = width * half_height / height ;
+
+      Vector w = (orig-lookat).unit();  // camera direction
+      Vector u = (viewup*w).unit();
+      Vector v = w*u;
+
+      hor = 2*u*half_width;
+      ver = 2*v*half_height;
+      lower_left_corner = orig - (hor+ver)/2 - w;
+    }
 
     ~Camera() {};
 
