@@ -105,11 +105,15 @@ inline Vector operator*(const Vector &v1, const Vector &v2) {
   );
 }
 
+// element by element product (for color computation)
+inline Vector operator^(const Vector &v1, const Vector &v2) {
+  return Vector(v1.x * v2.x, v1.y * v2.y, v1.z * v2.z);
+}
+
 inline Vector Vector::unit() const { return (*this)/length(); }
 
 
 inline Vector random_point_in_sphere() {
-  return VECTOR_ZERO;
   Vector random_point;
 
   do {

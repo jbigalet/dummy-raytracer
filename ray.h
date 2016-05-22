@@ -4,7 +4,8 @@
 #include <cfloat>
 
 #include "vector.h"
-#include "object.h"
+
+class Object;
 
 class Ray {
   public:
