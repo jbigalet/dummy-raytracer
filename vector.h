@@ -3,6 +3,9 @@
 
 #include <math.h>
 
+#define VECTOR_ZERO Vector(0,0,0)
+#define VECTOR_ONE Vector(1,1,1)
+
 class Vector {
   public:
     float x, y, z;
@@ -11,9 +14,19 @@ class Vector {
     Vector() {};
     Vector(float a, float b, float c): x(a), y(b), z(c) {}
 
-    ~Vector();
+    ~Vector() {};
 
     inline float length() const { return sqrt(x*x+y*y+z*z); }
+
+    inline Vector unit() const;
+
+    inline int* toRGB(float gamma=1.0){
+      return new int[3] {
+        int(255*pow(x, 1.0/gamma)),
+        int(255*pow(y, 1.0/gamma)),
+        int(255*pow(z, 1.0/gamma))
+      };
+    }
 
 
 // Operators
@@ -70,7 +83,7 @@ inline Vector operator*(const float f, const Vector &v) {
 }
 inline Vector operator*(const Vector &v, const float f) { return f*v; }
 
-inline Vector operator/(const float f, const Vector &v) {
+inline Vector operator/(const Vector &v, const float f) {
   return Vector(v.x / f, v.y / f, v.z / f);
 }
 
@@ -91,6 +104,7 @@ inline Vector operator*(const Vector &v1, const Vector &v2) {
   );
 }
 
+inline Vector Vector::unit() const { return (*this)/length(); }
 
 
 #endif /* DEF_VECTOR */

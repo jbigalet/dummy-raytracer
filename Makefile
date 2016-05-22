@@ -1,22 +1,20 @@
-srcfiles := $(shell find . -name "*.cpp")
-objects  := $(patsubst %.cpp, %.o, $(srcfiles))
+CXX=g++
+CXXFLAGS=-g -std=c++11 -Wall
 
-all: $(objects)
-	g++ -o "bin/raytracer" $(objects)
+BIN=bin/raytracer
+
+SRC=$(wildcard *.cpp)
+OBJ=$(SRC:%.cpp=%.o)
+
+all: $(OBJ)
+	$(CXX) $(CXXFLAGS) -o $(BIN) $^
 
 run: all
-	./bin/raytracer > image.ppm
+	$(BIN) > image.ppm
 
-depend: .depend
-
-.depend: $(srcfiles)
-	rm -f ./.depend
-	g++ -MM $^>>./.depend;
+%.o: %.c
+	$(CXX) $@ -c $<
 
 clean:
-	rm -f $(objects)
-
-dist-clean: clean
-	rm -f *~ .depend
-
-include .depend
+	rm -f *.o
+	rm $(BIN)
