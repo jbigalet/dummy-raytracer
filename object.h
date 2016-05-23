@@ -74,12 +74,12 @@ class Sphere : public Object {
     HitRecord *hit(Ray ray, float t_min, float t_max) {
       Vector oc = ray.orig - center;
       float a = ray.dir%ray.dir;
-      float b = 2.0 * oc%ray.dir;
+      float b = 2.0f * oc%ray.dir;
       float c = oc%oc - radius*radius;
-      float discriminant = b*b-4*a*c;
+      float discriminant = b*b-4.0f*a*c;
 
-      if(discriminant > 0){
-        float tmp = (-b-sqrt(discriminant))/(2.0*a);
+      if(discriminant > 0.0f){
+        float tmp = (-b-sqrt(discriminant))/(2.0f*a);
         if(tmp > t_min && tmp < t_max)
           return new HitRecord(
               tmp,
@@ -88,7 +88,7 @@ class Sphere : public Object {
               material
               );
 
-        tmp = (-b+sqrt(discriminant))/(2.0*a);
+        tmp = (-b+sqrt(discriminant))/(2.0f*a);
         if(tmp > t_min && tmp < t_max)
           return new HitRecord(
               tmp,

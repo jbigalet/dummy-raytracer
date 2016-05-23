@@ -5,6 +5,7 @@
 #include <cmath>
 
 #include "stats.h"
+#include "utils.h"
 
 class Camera {
   public:
@@ -39,8 +40,8 @@ class Camera {
       Vector color = VECTOR_ZERO;
       for(int i=0 ; i<nsamples ; i++)
         color += getRay(
-                        (x+drand48())/width,
-                        (y+drand48())/height
+                        (x+RANDOM_FLOAT)/width,
+                        (y+RANDOM_FLOAT)/height
             ).color(obj, max_bounce);
 
       nDirectRay += nsamples;  // @stats

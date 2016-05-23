@@ -12,8 +12,10 @@
 int main() {
   auto startTime = std::chrono::high_resolution_clock::now();
 
-  int width = 1600;
-  int height = 800;
+  /* int width = 1600; */
+  /* int height = 800; */
+  int width = 400;
+  int height = 200;
 
   std::ofstream image;
   image.open("image.ppm");
@@ -23,7 +25,7 @@ int main() {
   Camera camera(
       width,
       height,
-      Vector(0, 0.5, 0),
+      Vector(-2, 2, 1),
       Vector(0, 0, -1),
       Vector(0, 1, 0),
       90

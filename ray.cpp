@@ -28,7 +28,7 @@ Vector Ray::color(Object &obj, int max_bounce){
 
   }
 
-  float t = 0.5*(dir.unit().y + 1.0);
-  return (1.0-t)*VECTOR_ONE + t*Vector(0.5, 0.7, 1.0);
+  float t = 0.5f*(dir.unit().y + 1.0f);
+  return (1.0-t)*VECTOR_ONE + t*Vector(0.5f, 0.7f, 1.0f);
 }
 

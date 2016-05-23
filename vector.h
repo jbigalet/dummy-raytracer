@@ -4,6 +4,8 @@
 #include <math.h>
 #include <stdlib.h>
 
+#include "utils.h"
+
 #define VECTOR_ZERO Vector(0,0,0)
 #define VECTOR_ONE Vector(1,1,1)
 
@@ -125,9 +127,9 @@ inline Vector random_point_in_sphere() {
   do {
 
     random_point = Vector(
-        drand48(),
-        drand48(),
-        drand48()
+        RANDOM_FLOAT,
+        RANDOM_FLOAT,
+        RANDOM_FLOAT
         );
 
   } while (random_point%random_point >= 1.0);
