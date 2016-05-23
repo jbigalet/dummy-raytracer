@@ -32,22 +32,22 @@ class Camera {
 
     ~Camera() {};
 
-    Ray getRay(float u, float v){
-      return Ray(orig, lower_left_corner + u*hor + v*ver - orig);
-    }
+    /* Ray getRay(float u, float v){ */
+    /*   return Ray(orig, lower_left_corner + u*hor + v*ver - orig); */
+    /* } */
 
-    Vector getColor(Object &obj, int x, int y, int max_bounce, int nsamples){
-      Vector color = VECTOR_ZERO;
-      for(int i=0 ; i<nsamples ; i++)
-        color += getRay(
-                        (x+RANDOM_FLOAT)/width,
-                        (y+RANDOM_FLOAT)/height
-            ).color(obj, max_bounce);
+    /* Vector getColor(Object &obj, int x, int y, int max_bounce, int nsamples){ */
+    /*   Vector color = VECTOR_ZERO; */
+    /*   for(int i=0 ; i<nsamples ; i++) */
+    /*     color += getRay( */
+    /*                     (x+RANDOM_FLOAT)/width, */
+    /*                     (y+RANDOM_FLOAT)/height */
+    /*         ).color(obj, max_bounce); */
 
-      nDirectRay += nsamples;  // @stats
+    /*   nDirectRay += nsamples;  // @stats */
 
-      return color/nsamples;
-    }
+    /*   return color/nsamples; */
+    /* } */
 };
 
 #endif /* DEF_CAMERA */
