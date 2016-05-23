@@ -8,6 +8,7 @@
 
 class Material {
   public:
+    ~Material() {}
     virtual Ray *scatter(Ray &r, HitRecord &rec) = 0;
 };
 

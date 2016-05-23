@@ -15,10 +15,17 @@ Vector Ray::color(Object &obj, int max_bounce){
   if(hit != NULL){
     /* return 0.5*Vector(hit->normal.x+1, hit->normal.y+1, hit->normal.z+1); */
     Ray *scattered = hit->material->scatter(*this, *hit);
-    if(scattered != NULL)
-      return scattered->color(obj, max_bounce-1) ^ scattered->att;
-    else
+
+    delete hit;
+
+    if(scattered != NULL) {
+      Vector res = scattered->color(obj, max_bounce-1) ^ scattered->att;
+      delete scattered;
+      return res;
+    } else {
       return VECTOR_ZERO;
+    }
+
   }
 
   float t = 0.5*(dir.unit().y + 1.0);

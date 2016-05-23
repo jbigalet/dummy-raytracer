@@ -14,6 +14,10 @@ struct HitRecord {
   HitRecord(float t, Vector p, Vector normal, Material *material)
            : t(t), p(p), normal(normal), material(material) {};
 
+  ~HitRecord() {
+    /* delete material; */
+  }
+
   float t;
   Vector p;
   Vector normal;
@@ -22,6 +26,8 @@ struct HitRecord {
 
 class Object {
   public:
+    ~Object() {}
+
     virtual HitRecord* hit(Ray ray, float t_min, float t_max) = 0;
 };
 
@@ -31,7 +37,12 @@ class ObjectGroup : public Object {
     std::vector<Object*> list;
 
     ObjectGroup() {}
-    ~ObjectGroup() {}
+
+    ~ObjectGroup() {
+      /* for(auto &it: list) */
+      /*   delete it; */
+      /* list.clear(); */
+    }
 
     void add(Object *obj) { list.push_back(obj); }
 
@@ -39,8 +50,10 @@ class ObjectGroup : public Object {
       HitRecord *bestHit = NULL;
       for(Object* obj : list){
         HitRecord* hit = obj->hit(ray, t_min, bestHit == NULL ? t_max : bestHit->t);
-        if(hit != NULL)
+        if(hit != NULL){
+          delete bestHit;
           bestHit = hit;
+        }
       }
       return bestHit;
     }

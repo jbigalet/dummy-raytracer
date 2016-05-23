@@ -12,8 +12,8 @@
 int main() {
   auto startTime = std::chrono::high_resolution_clock::now();
 
-  int width = 200;
-  int height = 100;
+  int width = 1600;
+  int height = 800;
 
   std::ofstream image;
   image.open("image.ppm");
