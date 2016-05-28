@@ -27,12 +27,12 @@ int main() {
   int width = 600;
   int height = 300;
 
-  int nsamples = 100;
+  int nsamples = 50;
   int max_bounces = 100;
 
   std::ofstream image;
-  /* image.open("image.ppm"); */
-  image.open("image_"+std::to_string(nsamples)+".ppm");
+  image.open("image.ppm");
+  /* image.open("image_"+std::to_string(nsamples)+".ppm"); */
 
   image << "P3\n" << width << " " << height << "\n255\n";
 
@@ -50,7 +50,7 @@ int main() {
   Camera camera(
       width,
       height,
-      Vector(0, 0, 0.5),
+      Vector(0, 0, 0),
       Vector(0, 0, -1),
       Vector(0, 1, 0),
       90
@@ -68,6 +68,7 @@ int main() {
   world->add( new Sphere(Vector(0, 0, -1), 0.5, new Lambertian(Vector(0.8, 0.3, 0.3))) );
   world->add( new Sphere(Vector(1, 0, -1), 0.5, new Metal(Vector(0.9, 0.9, 0.9), 0)) );
   world->add( new Sphere(Vector(-1, 0, -1), 0.5, new Dielectric(1.5f)) );
+  /* world->add( new Sphere(Vector(-1, 0, -1), 0.45, new Dielectric(1.f, 1.5f)) ); */
   /* world->add( new Sphere(Vector(-1, 0, -1), 0.2, new Dielectric(1.f, 1.5f)) ); */
   /* world->add( new Sphere(Vector(-1, 0, -2), 0.5, new Lambertian(Vector(0.2, 0.8, 0.4)) )); */
 

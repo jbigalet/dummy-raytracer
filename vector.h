@@ -3,6 +3,7 @@
 
 #include <math.h>
 #include <stdlib.h>
+#include <iostream>
 
 #include "utils.h"
 
@@ -16,6 +17,13 @@ class Vector {
 
     Vector() {};
     Vector(float a, float b, float c): x(a), y(b), z(c) {}
+
+    // clone constructor
+    Vector(const Vector &v) {
+      x = v.x;
+      y = v.y;
+      z = v.z;
+    }
 
     ~Vector() {};
 
@@ -117,18 +125,20 @@ inline Vector operator|(const Vector &v, const Vector &norm) {
   return v - 2.f*(v%norm) * norm;
 }
 
+
+
 // refraction
 // from http://www.flipcode.com/archives/reflection_transmission.pdf
 // iratio = refraction indice from / refraction indice to
 // returns to &refracted
-inline bool refract(const Vector &v, const Vector &norm, float iratio, Vector& refracted) {
+inline Vector* refract(const Vector &v, const Vector &norm, float iratio) {
   float cosI = v%norm;
   float sinT2 = iratio * iratio * (1.f - cosI*cosI);
   if(sinT2 > 1.f)
-    return false;
+    return NULL;
 
-  refracted  = iratio*v - (iratio + sqrt(1.f-sinT2)) * norm;
-  return true;
+  /* return new Vector(iratio*v - (iratio + sqrt(1.f-sinT2)) * norm); */
+  return new Vector(iratio*(v-norm*cosI) - norm*sqrt(1.f - sinT2));
 }
 
 
@@ -165,6 +175,12 @@ inline Vector random_point_in_sphere() {
   /* return Vector(delta3*udist*cos(theta), */
   /*               delta3*udist*sin(theta), */
   /*               delta3*u); */
+}
+
+
+// to string
+inline std::ostream& operator<<(std::ostream &os, Vector const &v){
+  return os << "[" << v.x << ", " << v.y << ", " << v.z << "]";
 }
 
 #endif /* DEF_VECTOR */

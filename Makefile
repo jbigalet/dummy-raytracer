@@ -14,11 +14,12 @@ all: $(OBJ)
 allfast: $(OBJ)
 	$(CXX) $(CXXFLAGSFAST) -o $(BIN) $^
 
-# run: clean all
-run: all
+run: clean all
+# run: all
 	$(BIN)
 
-runfast: allfast
+# runfast: allfast
+runfast: clean allfast
 	$(BIN)
 
 %.o: %.c
