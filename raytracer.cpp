@@ -28,6 +28,10 @@ int main() {
   int height = 300;
 
   int nsamples = 50;
+  /* int nsamples = 100; */
+  /* int nsamples = 200; */
+  /* int nsamples = 1000; */
+
   int max_bounces = 100;
 
   std::ofstream image;
@@ -50,7 +54,7 @@ int main() {
   Camera camera(
       width,
       height,
-      Vector(0, 0, 0),
+      Vector(0, 0, 0.5),
       Vector(0, 0, -1),
       Vector(0, 1, 0),
       90
@@ -68,9 +72,7 @@ int main() {
   world->add( new Sphere(Vector(0, 0, -1), 0.5, new Lambertian(Vector(0.8, 0.3, 0.3))) );
   world->add( new Sphere(Vector(1, 0, -1), 0.5, new Metal(Vector(0.9, 0.9, 0.9), 0)) );
   world->add( new Sphere(Vector(-1, 0, -1), 0.5, new Dielectric(1.5f)) );
-  /* world->add( new Sphere(Vector(-1, 0, -1), 0.45, new Dielectric(1.f, 1.5f)) ); */
-  /* world->add( new Sphere(Vector(-1, 0, -1), 0.2, new Dielectric(1.f, 1.5f)) ); */
-  /* world->add( new Sphere(Vector(-1, 0, -2), 0.5, new Lambertian(Vector(0.2, 0.8, 0.4)) )); */
+  world->add( new Sphere(Vector(-1, 0, -1), 0.45, new Dielectric(1.f, 1.5f)) );
 
   for(int j=height-1 ; j>=0; j--)
     for(int i=0 ; i<width ; i++) {

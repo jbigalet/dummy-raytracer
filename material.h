@@ -54,7 +54,6 @@ class Dielectric: public Material {
 
     Ray *scatter(Ray &r, HitRecord &rec){
 
-
       // 2 cases: either we're currently 'inside' this mat, so refraction leaves it
       // or we're outside & refraction goes inside
       float futur_refract;  // next refraction indice
@@ -63,11 +62,21 @@ class Dielectric: public Material {
       else
         futur_refract = refract_int;
 
-      Vector* refracted = refract(r.dir.unit(), rec.normal, r.refract_v/futur_refract);
-      if(refracted != NULL)
-        return new Ray(rec.p, *refracted, VECTOR_ONE, futur_refract);
+      // compute refraction / reflection ratio - see fresnel equations
+      // using schlick's approximation (cf wikipedia)
+      float r0sqrt = (r.refract_v - futur_refract) / (r.refract_v + futur_refract);
+      float r0 = r0sqrt*r0sqrt;
+      float cos = -r.dir.unit() % rec.normal;
+      float coef = r0 + (1.f-r0)*pow(1.f-cos, 5.f);
 
-      return NULL;
+      if(RANDOM_FLOAT > coef){ // refraction
+        Vector* refracted = refract(r.dir.unit(), rec.normal, r.refract_v/futur_refract);
+        if(refracted != NULL)
+          return new Ray(rec.p, *refracted, VECTOR_ONE, futur_refract);
+      }
+
+      // either no refraction or we chose to pick the refraction with schlick's app:
+      return new Ray(rec.p, r.dir.unit() | rec.normal);
     }
 };
 
