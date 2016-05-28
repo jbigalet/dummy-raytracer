@@ -14,11 +14,17 @@ int main() {
 
   /* int width = 1600; */
   /* int height = 800; */
-  int width = 400;
-  int height = 200;
+  int width = 1920/2;
+  int height = 1080/2;
+  /* int width = 400; */
+  /* int height = 200; */
+
+  int nsamples = 100;
+  int max_bounces = 100;
 
   std::ofstream image;
-  image.open("image.ppm");
+  /* image.open("image.ppm"); */
+  image.open("image_"+std::to_string(nsamples)+".ppm");
 
   image << "P3\n" << width << " " << height << "\n255\n";
 
@@ -41,7 +47,7 @@ int main() {
   for(int j=height-1 ; j>=0; j--)
     for(int i=0 ; i<width ; i++) {
 
-      Vector color = camera.getColor(*world, i, j, 100, 100);
+      Vector color = camera.getColor(*world, i, j, max_bounces, nsamples);
 
       int *rgb = color.toRGB(2);
       image << rgb[0] << " " << rgb[1] << " " << rgb[2] << "\n";

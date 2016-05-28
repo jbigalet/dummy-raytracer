@@ -135,6 +135,22 @@ inline Vector random_point_in_sphere() {
   } while (random_point%random_point >= 1.0);
 
   return random_point;
+
+
+  // alternate method: http://math.stackexchange.com/questions/87230/picking-random-points-in-the-volume-of-sphere-with-uniform-probability
+  // a bit slower =[
+
+  /* float delta = random_float(); */
+  /* float u = random_float_minus_one(); */
+  /* float theta = random_float_2pi(); */
+
+  /* float delta3 = pow(delta, 1.0f/3.0f); */
+  /* float u2 = u*u; */
+  /* float udist = sqrt(1.0f-u2); */
+
+  /* return Vector(delta3*udist*cos(theta), */
+  /*               delta3*udist*sin(theta), */
+  /*               delta3*u); */
 }
 
 #endif /* DEF_VECTOR */
