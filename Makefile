@@ -1,5 +1,6 @@
 CXX=g++
 CXXFLAGS=-g -std=c++11 -Wall -Ofast -march=native -flto
+CXXFLAGSFAST=-g -std=c++11 -Wall -O3 -march=native
 # CXXFLAGS=-g -std=c++11 -Wall -O3
 
 BIN=bin/raytracer
@@ -10,7 +11,14 @@ OBJ=$(SRC:%.cpp=%.o)
 all: $(OBJ)
 	$(CXX) $(CXXFLAGS) -o $(BIN) $^
 
-run: clean all
+allfast: $(OBJ)
+	$(CXX) $(CXXFLAGSFAST) -o $(BIN) $^
+
+# run: clean all
+run: all
+	$(BIN)
+
+runfast: allfast
 	$(BIN)
 
 %.o: %.c

@@ -44,5 +44,42 @@ class Metal: public Material {
     }
 };
 
+class Dielectric: public Material {
+  public:
+    float refract_int;
+    float refract_ext;
+
+    Dielectric(float rint, float rext=1.f): refract_int(rint), refract_ext(rext) {};
+    ~Dielectric() {};
+
+    Ray *scatter(Ray &r, HitRecord &rec){
+
+
+      // 2 cases: either we're currently 'inside' this mat, so refraction leaves it
+      // or we're outside & refraction goes inside
+      float futur_refract;  // next refraction indice
+      if(r.refract_v == refract_int){  // <=> inside, going out
+        futur_refract = refract_ext;
+      } else {
+        futur_refract = refract_int;
+      }
+
+      Vector norm;
+
+      /* if(r.dir%rec.normal > 0){ */
+        /* norm = -rec.normal; */
+      /* } else { */
+        norm = rec.normal;
+      /* } */
+
+      Vector refracted;
+      if(refract(r.dir, norm, r.refract_v/futur_refract, refracted)){
+        return new Ray(rec.p, refracted, VECTOR_ONE, futur_refract);
+      }
+
+      return NULL;
+    }
+};
+
 
 #endif /* DEF_MATERIAL */

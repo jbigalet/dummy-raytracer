@@ -79,23 +79,39 @@ class Sphere : public Object {
       float discriminant = b*b-4.0f*a*c;
 
       if(discriminant > 0.0f){
-        float tmp = (-b-sqrt(discriminant))/(2.0f*a);
-        if(tmp > t_min && tmp < t_max)
-          return new HitRecord(
-              tmp,
-              ray.point_at_parameter(tmp),
-              (ray.point_at_parameter(tmp) - center) / radius,
-              material
-              );
+        float sqrtt = sqrt(discriminant);
+        float tmp = (-b-sqrtt)/(2.0f*a);
+        if(tmp > t_min && tmp < t_max) {
+          Vector hitpoint = ray.point_at_parameter(tmp);
 
-        tmp = (-b+sqrt(discriminant))/(2.0f*a);
-        if(tmp > t_min && tmp < t_max)
+          Vector norm = (hitpoint - center) / radius;
+          if(norm%ray.dir > 0)
+            norm = -norm;
+
           return new HitRecord(
               tmp,
-              ray.point_at_parameter(tmp),
-              (ray.point_at_parameter(tmp) - center) / radius,
+              hitpoint,
+              norm,
               material
               );
+        }
+
+        tmp = (-b+sqrtt)/(2.0f*a);
+         /* tmp = -tmp - b/a;  // branch prediction makes this slower? why cant gcc optimize this.. */
+        if(tmp > t_min && tmp < t_max) {
+          Vector hitpoint = ray.point_at_parameter(tmp);
+
+          Vector norm = (hitpoint - center) / radius;
+          if(norm%ray.dir > 0)
+            norm = -norm;
+
+          return new HitRecord(
+              tmp,
+              hitpoint,
+              norm,
+              material
+              );
+        }
       }
 
       return NULL;

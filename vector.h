@@ -114,7 +114,21 @@ inline Vector operator^(const Vector &v1, const Vector &v2) {
 
 // reflection
 inline Vector operator|(const Vector &v, const Vector &norm) {
-  return (-2*(v%norm)) * norm;
+  return v - 2.f*(v%norm) * norm;
+}
+
+// refraction
+// from http://www.flipcode.com/archives/reflection_transmission.pdf
+// iratio = refraction indice from / refraction indice to
+// returns to &refracted
+inline bool refract(const Vector &v, const Vector &norm, float iratio, Vector& refracted) {
+  float cosI = v%norm;
+  float sinT2 = iratio * iratio * (1.f - cosI*cosI);
+  if(sinT2 > 1.f)
+    return false;
+
+  refracted  = iratio*v - (iratio + sqrt(1.f-sinT2)) * norm;
+  return true;
 }
 
 
