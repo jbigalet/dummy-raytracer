@@ -4,6 +4,7 @@
 #include "ray.h"
 #include "vector.h"
 #include "object.h"
+#include "texture.h"
 
 
 class Material {
@@ -18,26 +19,33 @@ class Material {
 
 class Lambertian : public Material {
   public:
-    Vector albedo;
+    Texture* albedo;
 
-    Lambertian(Vector albedo) : albedo(albedo) {};
+    Lambertian(Texture* albedo) : albedo(albedo) {};
     ~Lambertian() {};
 
     Ray *scatter(Ray &r, HitRecord &rec){
-      return new Ray(rec.p, rec.normal + random_point_in_sphere(), albedo);
+      return new Ray(rec.p,
+                     rec.normal + random_point_in_sphere(),
+                     albedo->color_at(rec.u, rec.v)
+                    );
     }
 };
 
 class Metal: public Material {
   public:
-    Vector albedo;
+    Texture* albedo;
     float fuzz;
 
-    Metal(Vector albedo, float fuzz) : albedo(albedo), fuzz(fuzz) {};
+    Metal(Texture* albedo, float fuzz) : albedo(albedo), fuzz(fuzz) {};
     ~Metal() {};
 
     Ray *scatter(Ray &r, HitRecord &rec){
-      Ray *res = new Ray(rec.p, r.dir.unit() | (rec.normal + fuzz*random_point_in_sphere()), albedo);
+      Ray *res = new Ray(rec.p,
+                         r.dir.unit() | (rec.normal + fuzz*random_point_in_sphere()),
+                         albedo->color_at(rec.u, rec.v)
+                        );
+
       if( res->dir % rec.normal > 0 )
         return res;
       return NULL;

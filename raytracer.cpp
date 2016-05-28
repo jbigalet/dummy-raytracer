@@ -7,6 +7,7 @@
 #include "ray.h"
 #include "object.h"
 #include "camera.h"
+#include "texture.h"
 #include "stats.h"
 
 int main() {
@@ -54,7 +55,7 @@ int main() {
   Camera camera(
       width,
       height,
-      Vector(0, 0, 0.5),
+      Vector(-1.8, 1., -2),
       Vector(0, 0, -1),
       Vector(0, 1, 0),
       90
@@ -68,11 +69,25 @@ int main() {
   /* world->add( new Sphere(Vector(1, 0, -1), 0.5, new Metal(Vector(0.8, 0.6, 0.2), 0)) ); */
   /* world->add( new Sphere(Vector(-1, 0, -1), 0.5, new Metal(Vector(0.8, 0.8, 0.8), 0.1)) ); */
 
-  world->add( new Sphere(Vector(0, -100.5, -1), 100, new Lambertian(Vector(0.8, 0.8, 0))) );
-  world->add( new Sphere(Vector(0, 0, -1), 0.5, new Lambertian(Vector(0.8, 0.3, 0.3))) );
-  world->add( new Sphere(Vector(1, 0, -1), 0.5, new Metal(Vector(0.9, 0.9, 0.9), 0)) );
+  // bubble-lamb-metal
+  world->add( new Sphere(Vector(0, -100.5, -1), 100, new Lambertian(new ConstantTexture(0.8, 0.8, 0))) );
+  /* world->add( new Sphere(Vector(0, 0, -1), */
+  /*                        0.5, */
+  /*                        new Lambertian( */
+  /*                          new CheckerTexture( */
+  /*                            new ConstantTexture(0.f, 0.f, 0.f), */
+  /*                            new ConstantTexture(1.f, 1.f, 1.f))))); */
+
+  world->add( new Sphere(Vector(0, 0, -1),
+        0.5,
+        new Lambertian(
+          new ImageTexture("earth.bmp"))));
+
+  world->add( new Sphere(Vector(1, 0, -1), 0.5, new Metal(new ConstantTexture(0.9, 0.9, 0.9), 0)) );
   world->add( new Sphere(Vector(-1, 0, -1), 0.5, new Dielectric(1.5f)) );
   world->add( new Sphere(Vector(-1, 0, -1), 0.45, new Dielectric(1.f, 1.5f)) );
+
+  /* ImageTexture im("earth.bmp"); */
 
   for(int j=height-1 ; j>=0; j--)
     for(int i=0 ; i<width ; i++) {
@@ -80,6 +95,7 @@ int main() {
       Vector color = camera.getColor(*world, i, j, max_bounces, nsamples);
 
       int *rgb = color.toRGB(2);
+      /* int *rgb = im.color_at(float(i)/width, float(j)/height).toRGB(1); */
       image << rgb[0] << " " << rgb[1] << " " << rgb[2] << "\n";
     }
 

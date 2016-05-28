@@ -1,6 +1,6 @@
 CXX=g++
-CXXFLAGS=-g -std=c++11 -Wall -Ofast -march=native -flto
-CXXFLAGSFAST=-g -std=c++11 -Wall -O3 -march=native
+# CXXFLAGS=-g -std=c++11 -Wall -Ofast -march=native -flto
+CXXFLAGS=-g -std=c++11 -Wall -O2
 # CXXFLAGS=-g -std=c++11 -Wall -O3
 
 BIN=bin/raytracer

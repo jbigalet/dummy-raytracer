@@ -11,8 +11,8 @@ class Ray;
 class Material;
 
 struct HitRecord {
-  HitRecord(float t, Vector p, Vector normal, Material *material)
-           : t(t), p(p), normal(normal), material(material) {};
+  HitRecord(float t, Vector p, Vector normal, Material *material, float u, float v)
+           : t(t), p(p), normal(normal), material(material), u(u), v(v) {};
 
   ~HitRecord() {
     /* delete material; */
@@ -22,6 +22,8 @@ struct HitRecord {
   Vector p;
   Vector normal;
   Material *material;
+  float u;
+  float v;
 };
 
 class Object {
@@ -78,43 +80,48 @@ class Sphere : public Object {
       float c = oc%oc - radius*radius;
       float discriminant = b*b-4.0f*a*c;
 
+      float tmp;
+
       if(discriminant > 0.0f){
         float sqrtt = sqrt(discriminant);
-        float tmp = (-b-sqrtt)/(2.0f*a);
-        if(tmp > t_min && tmp < t_max) {
-          Vector hitpoint = ray.point_at_parameter(tmp);
+        tmp = (-b-sqrtt)/(2.0f*a);
 
-          Vector norm = (hitpoint - center) / radius;
-          if(norm%ray.dir > 0)
-            norm = -norm;
-
-          return new HitRecord(
-              tmp,
-              hitpoint,
-              norm,
-              material
-              );
-        }
+        if(tmp > t_min && tmp < t_max)
+          goto returnHitRec;
 
         tmp = (-b+sqrtt)/(2.0f*a);
          /* tmp = -tmp - b/a;  // branch prediction makes this slower? why cant gcc optimize this.. */
-        if(tmp > t_min && tmp < t_max) {
-          Vector hitpoint = ray.point_at_parameter(tmp);
-
-          Vector norm = (hitpoint - center) / radius;
-          if(norm%ray.dir > 0)
-            norm = -norm;
-
-          return new HitRecord(
-              tmp,
-              hitpoint,
-              norm,
-              material
-              );
-        }
+        if(tmp > t_min && tmp < t_max)
+          goto returnHitRec;
       }
 
       return NULL;
+
+
+    returnHitRec:
+      Vector hitpoint = ray.point_at_parameter(tmp);
+
+      Vector norm = (hitpoint - center) / radius;
+      if(norm%ray.dir > 0)
+        norm = -norm;
+
+      /* float u = 0.5f + atan2(dz, dx); */
+      /* float v = 0.5f + asin(dy)/M_PI; */
+
+      float phi = atan2(hitpoint.z, hitpoint.x);
+      float theta = asin(hitpoint.y);
+
+      float u = 1.f-(phi + M_PI)/(2*M_PI);
+      float v = (theta + M_PI/2.f)/(M_PI);
+
+      return new HitRecord(
+          tmp,
+          hitpoint,
+          norm,
+          material,
+          u,
+          v
+          );
     }
 };
 
