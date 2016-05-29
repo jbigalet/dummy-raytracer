@@ -14,21 +14,26 @@ Vector Ray::color(Object &obj, int max_bounce){
 
   if(hit != NULL){
     /* return 0.5*Vector(hit->normal.x+1, hit->normal.y+1, hit->normal.z+1); */
-    Ray *scattered = hit->material->scatter(*this, *hit);
+    Vector attenuation;
+    Ray *scattered = hit->material->scatter(*this, *hit, attenuation);
 
     delete hit;
 
     if(scattered != NULL) {
-      Vector res = scattered->color(obj, max_bounce-1) ^ scattered->att;
+      Vector res = scattered->color(obj, max_bounce-1) ^ attenuation;
       delete scattered;
       return res;
     } else {
-      return VECTOR_ZERO;
+      return attenuation;
     }
 
   }
 
-  float t = 0.5f*(dir.unit().y + 1.0f);
-  return (1.0-t)*VECTOR_ONE + t*Vector(0.5f, 0.7f, 1.0f);
+  // sky
+  /* float t = 0.5f*(dir.unit().y + 1.0f); */
+  /* return (1.0-t)*VECTOR_ONE + t*Vector(0.5f, 0.7f, 1.0f); */
+
+  // void
+  return VECTOR_ZERO;
 }
 

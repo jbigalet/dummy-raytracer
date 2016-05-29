@@ -45,8 +45,12 @@ class ImageTexture: public Texture {
       unsigned char info[54];
       fread(info, sizeof(unsigned char), 54, file);
 
-      width = *(int*)&info[18];
-      height = *(int*)&info[22];
+      width = 0;
+      height = 0;
+      for(int i=0; i<4 ; i++){
+        width += info[18+i] << (8*i);
+        height += info[22+i] << (8*i);
+      }
 
       int row_size = (3*width + 3) & (~3);  // row padded to be able to read 24 bit color bmp
       unsigned char* data = new unsigned char[row_size];

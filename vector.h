@@ -15,7 +15,11 @@ class Vector {
     float x, y, z;
 
 
-    Vector() {};
+    Vector() {
+      x = 0.f;
+      y = 0.f;
+      z = 0.f;
+    };
     Vector(float a, float b, float c): x(a), y(b), z(c) {}
 
     // clone constructor

@@ -11,11 +11,10 @@ class Ray {
   public:
     Vector orig; // origin
     Vector dir;  // direction
-    Vector att;  // attenuation
     float refract_v; // refractive indice
 
-    Ray(Vector orig, Vector dir, Vector att=VECTOR_ONE, float refract_v=1.f)
-      : orig(orig), dir(dir), att(att), refract_v(refract_v) {};
+    Ray(Vector orig, Vector dir, float refract_v=1.f)
+      : orig(orig), dir(dir), refract_v(refract_v) {};
 
     ~Ray() {};
 
