@@ -162,10 +162,10 @@ inline Vector random_point_in_sphere() {
   do {
 
     random_point = Vector(
-        RANDOM_FLOAT,
-        RANDOM_FLOAT,
-        RANDOM_FLOAT
-        );
+       random_float_minus_one(),
+       random_float_minus_one(),
+       random_float_minus_one()
+    );
 
   } while (random_point%random_point >= 1.0);
 

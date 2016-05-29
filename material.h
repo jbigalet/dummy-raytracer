@@ -26,6 +26,7 @@ class Lambertian : public Material {
 
     Ray *scatter(Ray &r, HitRecord &rec, Vector &attenuation){
       attenuation = albedo->color_at(rec.u, rec.v);
+      /* return new Ray(rec.p, rec.normal + random_point_in_sphere()); */
       return new Ray(rec.p, rec.normal + random_point_in_sphere());
     }
 };
@@ -35,7 +36,7 @@ class Metal: public Material {
     Texture* albedo;
     float fuzz;
 
-    Metal(Texture* albedo, float fuzz) : albedo(albedo), fuzz(fuzz) {};
+    Metal(Texture* albedo, float fuzz=0.f) : albedo(albedo), fuzz(fuzz) {};
     ~Metal() {};
 
     Ray *scatter(Ray &r, HitRecord &rec, Vector &attenuation){

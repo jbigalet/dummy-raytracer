@@ -19,7 +19,8 @@ Vector Ray::color(Object &obj, int max_bounce){
 
     delete hit;
 
-    if(scattered != NULL) {
+    if(scattered != NULL && attenuation.length() > 0.01f) {
+    /* if(scattered != NULL) { */
       Vector res = scattered->color(obj, max_bounce-1) ^ attenuation;
       delete scattered;
       return res;
@@ -30,8 +31,8 @@ Vector Ray::color(Object &obj, int max_bounce){
   }
 
   // sky
-  float t = 0.5f*(dir.unit().y + 1.0f);
-  return (1.0-t)*VECTOR_ONE + t*Vector(0.5f, 0.7f, 1.0f);
+  /* float t = 0.5f*(dir.unit().y + 1.0f); */
+  /* return (1.0-t)*VECTOR_ONE + t*Vector(0.5f, 0.7f, 1.0f); */
 
   // void
   return VECTOR_ZERO;

@@ -43,13 +43,16 @@ class Camera {
                         (x+RANDOM_FLOAT)/width,
                         (y+RANDOM_FLOAT)/height
             ).color(obj, max_bounce);
-        sample.normalize_color();
+        /* sample.normalize_color(); */
         color += sample;
       }
 
       nDirectRay += nsamples;  // @stats
 
-      return color/nsamples;
+      color = color/nsamples;
+      color.normalize_color();
+
+      return color;
     }
 };
 

@@ -169,8 +169,12 @@ class Triangle: public Object {
 
     HitRecord *hit(Ray ray, float t_min, float t_max) {
       float ND = norm%ray.dir;
-      if(abs(ND) < 0.00001f) // assume its parallel
+
+      if(ND > -0.0001f)   // TODO change that if we want dielectric triangles
         return NULL;
+
+      /* if(abs(ND) < 0.00001f) // assume its parallel */
+      /*   return NULL; */
 
       float t = (norm%(a-ray.orig))/ND;
       if(t > t_min && t < t_max) {
