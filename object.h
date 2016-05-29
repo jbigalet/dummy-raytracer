@@ -121,9 +121,38 @@ class Sphere : public Object {
           material,
           u,
           v
-          );
+      );
     }
 };
 
+
+class Plane: public Object {
+  public:
+    Vector point; // any point on the plane will do
+    Vector norm;
+    Material *material;
+
+    Plane(Vector point, Vector norm, Material *material)
+      : point(point), norm(norm), material(material) {}
+
+    HitRecord *hit(Ray ray, float t_min, float t_max) {
+      float ND = norm%ray.dir;
+      if(abs(ND) < 0.00001f) // assume its parallel
+        return NULL;
+
+      float t = (norm%(point-ray.orig))/ND;
+      if(t > t_min && t < t_max)
+        return new HitRecord(
+          t,
+          ray.point_at_parameter(t),
+          norm,
+          material,
+          0.f,  // u
+          0.f   // v
+        );
+
+      return NULL;
+    }
+};
 
 #endif /* DEF_OBJECT */
