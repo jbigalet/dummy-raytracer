@@ -77,7 +77,9 @@ class Dielectric: public Material {
         Vector* refracted = refract(r.dir.unit(), rec.normal, r.refract_v/futur_refract);
         if(refracted != NULL) {
           attenuation = VECTOR_ONE;
-          return new Ray(rec.p, *refracted, futur_refract);
+          Ray* res = new Ray(rec.p, *refracted, futur_refract);
+          delete refracted;
+          return res;
         }
       }
 
