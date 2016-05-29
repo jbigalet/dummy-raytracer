@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <chrono>
+#include <thread>
 
 #include "vector.h"
 #include "material.h"
@@ -10,8 +11,16 @@
 #include "texture.h"
 #include "stats.h"
 
+void rt_pass(Camera camera, ObjectGroup world, int width, int height, int max_bounces, int nsamples, Vector** out) {
+  for(int i=0 ; i<width ; i++)
+    for(int j=0 ; j<height ; j++)
+      out[i][j] = camera.getColor(world, i, j, max_bounces, nsamples);
+}
+
 int main() {
   auto startTime = std::chrono::high_resolution_clock::now();
+
+  int nthreads = 4;
 
   /* int width = 400; */
   /* int height = 200; */
@@ -19,11 +28,11 @@ int main() {
   /* int width = 1600; */
   /* int height = 800; */
 
-  int width = 1920/4;
-  int height = 1080/4;
+  /* int width = 1920/4; */
+  /* int height = 1080/4; */
 
-  /* int width = 1920/2; */
-  /* int height = 1080/2; */
+  int width = 1920/2;
+  int height = 1080/2;
 
   /* int width = 1920; */
   /* int height = 1080; */
@@ -98,15 +107,32 @@ int main() {
   world->add( new Sphere(Vector(-2, 0, -1), 0.5, new Light(new ConstantTexture(20.f, 20.f, 20.f))) );
   world->add( new Sphere(Vector(0, 2, -1.5), 0.5, new Light(new ConstantTexture(20.f, 20.f, 20.f))) );
 
-  /* ImageTexture im("earth.bmp"); */
 
+  // start job threads
+  std::thread *threads = new std::thread[nthreads];
+  Vector*** out = new Vector**[nthreads];
+  for(int ithread=0 ; ithread<nthreads ; ithread++) {
+    out[ithread] = new Vector*[width];
+    for(int i=0 ; i<width ; i++)
+      out[ithread][i] = new Vector[height];
+
+    threads[ithread] = std::thread(rt_pass, camera, *world, width, height, max_bounces, nsamples/nthreads, out[ithread]);
+  }
+
+
+  // join threads
+  for(int ithread=0 ; ithread<nthreads ; ithread++)
+    threads[ithread].join();
+
+
+  // average res & write the image
   for(int j=height-1 ; j>=0; j--)
     for(int i=0 ; i<width ; i++) {
-
-      Vector color = camera.getColor(*world, i, j, max_bounces, nsamples);
-
-      int *rgb = color.toRGB(2);
-      /* int *rgb = im.color_at(float(i)/width, float(j)/height).toRGB(1); */
+      Vector average = VECTOR_ZERO;
+      for(int ithread=0 ; ithread<nthreads ; ithread++)
+        average += out[ithread][i][j];
+      average = average/nthreads;
+      int *rgb = average.toRGB(2);
       image << rgb[0] << " " << rgb[1] << " " << rgb[2] << "\n";
     }
 
