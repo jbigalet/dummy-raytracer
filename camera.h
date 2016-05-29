@@ -38,11 +38,14 @@ class Camera {
 
     Vector getColor(Object &obj, int x, int y, int max_bounce, int nsamples){
       Vector color = VECTOR_ZERO;
-      for(int i=0 ; i<nsamples ; i++)
-        color += getRay(
+      for(int i=0 ; i<nsamples ; i++){
+        Vector sample = getRay(
                         (x+RANDOM_FLOAT)/width,
                         (y+RANDOM_FLOAT)/height
             ).color(obj, max_bounce);
+        sample.normalize_color();
+        color += sample;
+      }
 
       nDirectRay += nsamples;  // @stats
 

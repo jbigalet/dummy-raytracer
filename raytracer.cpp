@@ -28,11 +28,11 @@ int main() {
   /* int width = 1600; */
   /* int height = 800; */
 
-  /* int width = 1920/4; */
-  /* int height = 1080/4; */
+  int width = 1920/4;
+  int height = 1080/4;
 
-  int width = 1920/2;
-  int height = 1080/2;
+  /* int width = 1920/2; */
+  /* int height = 1080/2; */
 
   /* int width = 1920; */
   /* int height = 1080; */
@@ -46,10 +46,12 @@ int main() {
   /* int nsamples = 10; */
   /* int nsamples = 20; */
   /* int nsamples = 50; */
-  int nsamples = 100;
+  /* int nsamples = 100; */
   /* int nsamples = 200; */
   /* int nsamples = 500; */
   /* int nsamples = 1000; */
+  int nsamples = 2000;
+  /* int nsamples = 5000; */
 
   int max_bounces = 100;
 
@@ -103,6 +105,8 @@ int main() {
         0.5,
         new Lambertian(
           new ImageTexture("earth.bmp"))));
+
+  world->add( new Triangle(Vector(0, 1.5f, -1), Vector(0, 0.5f, -1), Vector(0, 0.5f, -2), new Lambertian(new ConstantTexture(0.8f, 0.f, 0.f))) );
 
   world->add( new Sphere(Vector(-0.5, 0, -2.2), 0.5, new Metal(new ConstantTexture(0.9, 0.9, 0.9), 0)) );
   world->add( new Sphere(Vector(-1, 0, -1), 0.5, new Dielectric(1.5f)) );

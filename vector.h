@@ -43,6 +43,13 @@ class Vector {
       };
     }
 
+    // max out all floats to 1
+    inline void normalize_color() {
+      if(x > 1.f) x = 1.f;
+      if(y > 1.f) y = 1.f;
+      if(z > 1.f) z = 1.f;
+    }
+
 
 // Operators
 

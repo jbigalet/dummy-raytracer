@@ -155,4 +155,45 @@ class Plane: public Object {
     }
 };
 
+
+class Triangle: public Object {
+  public:
+    Vector a, b, c;
+    Vector norm;
+    Material *material;
+
+    Triangle(Vector a, Vector b, Vector c, Material *material)
+      : a(a), b(b), c(c), material(material) {
+      norm = ((b-a)*(c-a)).unit();
+    }
+
+    HitRecord *hit(Ray ray, float t_min, float t_max) {
+      float ND = norm%ray.dir;
+      if(abs(ND) < 0.00001f) // assume its parallel
+        return NULL;
+
+      float t = (norm%(a-ray.orig))/ND;
+      if(t > t_min && t < t_max) {
+        // check if its inside the triangle
+        // we check that the point in on the left side of each directed edges
+        Vector hitpoint = ray.point_at_parameter(t);
+
+        if(norm%((b-a)*(hitpoint-a)) < 0) return NULL;
+        if(norm%((c-b)*(hitpoint-b)) < 0) return NULL;
+        if(norm%((a-c)*(hitpoint-c)) < 0) return NULL;
+
+        return new HitRecord(
+            t,
+            hitpoint,
+            norm,
+            material,
+            0.f,  // u
+            0.f   // v
+            );
+      }
+
+      return NULL;
+    }
+};
+
 #endif /* DEF_OBJECT */
