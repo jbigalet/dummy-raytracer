@@ -156,15 +156,25 @@ class Plane: public Object {
 };
 
 
+#ifdef NO_MOLLER_TRUMBORE
+// Standard intersection model
+
 class Triangle: public Object {
   public:
     Vector a, b, c;
     Vector norm;
     Material *material;
 
+    Vector A, B, C;
+
     Triangle(Vector a, Vector b, Vector c, Material *material)
-      : a(a), b(b), c(c), material(material) {
-      norm = ((b-a)*(c-a)).unit();
+        : a(a), b(b), c(c), material(material) {
+
+      C = b - a;
+      B = a - c;
+      A = c - b;
+
+      norm = -(C*B).unit();
     }
 
     HitRecord *hit(Ray ray, float t_min, float t_max) {
@@ -182,9 +192,9 @@ class Triangle: public Object {
         // we check that the point in on the left side of each directed edges
         Vector hitpoint = ray.point_at_parameter(t);
 
-        if(norm%((b-a)*(hitpoint-a)) < 0) return NULL;
-        if(norm%((c-b)*(hitpoint-b)) < 0) return NULL;
-        if(norm%((a-c)*(hitpoint-c)) < 0) return NULL;
+        if(norm%(C*(hitpoint-a)) < 0) return NULL;
+        if(norm%(A*(hitpoint-b)) < 0) return NULL;
+        if(norm%(A*(hitpoint-c)) < 0) return NULL;
 
         return new HitRecord(
             t,
@@ -199,5 +209,61 @@ class Triangle: public Object {
       return NULL;
     }
 };
+
+
+#else  // no NO_MOLLER_TRUMBORE
+
+// Möller Trumbore intersection
+// https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm
+
+class Triangle: public Object {
+  public:
+    Vector a;
+    Material *material;
+
+    Vector norm;
+    Vector e1, e2;
+
+    Triangle(Vector a, Vector b, Vector c, Material *material) : a(a), material(material) {
+      e1 = b - a;
+      e2 = c - a;
+      norm = (e1*e2).unit();
+    }
+
+    HitRecord *hit(Ray ray, float t_min, float t_max) {
+      Vector P = ray.dir*e2;
+      float det = e1%P;
+
+      if (det < 0.0001f) return NULL;
+      /* if (fabs(det) < kEpsilon) return NULL; */
+
+      det = 1 / det;
+
+      Vector T = ray.orig - a;
+      float u = (T%P) * det;
+      if (u < 0 || u > 1) return NULL;
+
+      Vector Q = T*e1;
+      float v = (ray.dir%Q) * det;
+      if (v < 0 || u + v > 1) return NULL;
+
+      float t = (e2%Q) * det;
+
+      if(t > t_min && t < t_max)
+        return new HitRecord(
+            t,
+            ray.point_at_parameter(t),
+            norm,
+            material,
+            u,
+            v
+            );
+
+      return NULL;
+    }
+};
+
+#endif  // NO_MOLLER_TRUMBORE
+
 
 #endif /* DEF_OBJECT */
