@@ -50,6 +50,12 @@ class Vector {
       if(z > 1.f) z = 1.f;
     }
 
+    inline void tone_map() {
+      x = x/(x+1);
+      y = y/(y+1);
+      z = z/(z+1);
+    }
+
 
 // Operators
 

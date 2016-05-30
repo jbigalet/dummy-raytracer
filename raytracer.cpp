@@ -51,10 +51,10 @@ int main() {
   /* int nsamples = 100; */
   /* int nsamples = 200; */
   /* int nsamples = 500; */
-  /* int nsamples = 1000; */
+  int nsamples = 1000;
   /* int nsamples = 2000; */
   /* int nsamples = 5000; */
-  int nsamples = 10000;
+  /* int nsamples = 10000; */
 
   int max_bounces = 10;
   /* int max_bounces = 100; */
