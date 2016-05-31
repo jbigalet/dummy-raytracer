@@ -28,6 +28,9 @@ int main() {
   /* int width = 1600; */
   /* int height = 800; */
 
+  /* int width = 1920/8; */
+  /* int height = 1080/8; */
+
   /* int width = 1920/4; */
   int height = 1080/4;
 
@@ -49,9 +52,9 @@ int main() {
   /* int nsamples = 20; */
   /* int nsamples = 50; */
   /* int nsamples = 100; */
-  /* int nsamples = 200; */
+  int nsamples = 200;
   /* int nsamples = 500; */
-  int nsamples = 1000;
+  /* int nsamples = 1000; */
   /* int nsamples = 2000; */
   /* int nsamples = 5000; */
   /* int nsamples = 10000; */
@@ -150,6 +153,12 @@ int main() {
   world->add( new Triangle(F, B, G, backMat));
   world->add( new Triangle(C, G, B, backMat));
 
+  // front - letting ray in from the camera
+  // /!\ not part of the original cornell box
+  /* Material* frontMat = new Lambertian(new ConstantTexture(1.f, 1.f, 1.f)); */
+  /* world->add( new Triangle(E, H, A, frontMat)); */
+  /* world->add( new Triangle(D, A, H, frontMat)); */
+
   // floor
   Material* floorkMat = new Lambertian(new ConstantTexture(1.f, 1.f, 1.f));
   world->add( new Triangle(E, F, G, floorkMat));
@@ -157,6 +166,7 @@ int main() {
 
   // ceiling
   Material* ceilingMat = new Lambertian(new ConstantTexture(1.f, 1.f, 1.f));
+  /* Material* ceilingMat = new Metal(new ConstantTexture(1.f, 1.f, 1.f), 0); */
   world->add( new Triangle(A, C, B, ceilingMat));
   world->add( new Triangle(C, A, D, ceilingMat));
 
@@ -182,6 +192,12 @@ int main() {
   world->add( new Triangle(lA, lC, lB, lightMat));
   world->add( new Triangle(lC, lA, lD, lightMat));
   /* world->add( new Sphere(Vector(0, 0, 0), 0.2, new Light(new ConstantTexture(20.f, 20.f, 20.f))) ); */
+
+
+  // stuff inside the box
+
+  /* world->add( box(Vector(-0.7, -0.2, 0.2), 0.5, 0.5, 0.5, new Metal(new ConstantTexture(0.9, 0.9, 0.9), 0.01)) ); */
+  world->add( box(Vector(-0.8, -0.4, 0.2), 0.5, 0.5, 0.5, new Lambertian(new ConstantTexture(0.1, 0.2, 0.95))) );
 
 
   // start job threads

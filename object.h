@@ -194,7 +194,7 @@ class Triangle: public Object {
 
         if(norm%(C*(hitpoint-a)) < 0) return NULL;
         if(norm%(A*(hitpoint-b)) < 0) return NULL;
-        if(norm%(A*(hitpoint-c)) < 0) return NULL;
+        if(norm%(B*(hitpoint-c)) < 0) return NULL;
 
         return new HitRecord(
             t,
@@ -265,5 +265,61 @@ class Triangle: public Object {
 
 #endif  // NO_MOLLER_TRUMBORE
 
+
+
+// 'Fake primitive' - alternative constructors
+
+inline ObjectGroup* box(Vector orig,
+                        float width, float height, float depth,
+                        Material *mat) {
+
+  ObjectGroup* group = new ObjectGroup();
+
+  //   /B---C
+  //  A---D/|
+  //  | F-|-G
+  //  E/--H/
+
+  Vector A = orig;
+
+  Vector B = A + Vector(0, 0, depth);
+
+  Vector C = B + Vector(width, 0, 0);
+  Vector D = A + Vector(width, 0, 0);
+
+  Vector E = A + Vector(0, -height, 0);
+  Vector F = B + Vector(0, -height, 0);
+  Vector G = C + Vector(0, -height, 0);
+  Vector H = D + Vector(0, -height, 0);
+
+
+  // back
+  group->add( new Triangle(F, G, B, mat) );
+  group->add( new Triangle(C, B, G, mat) );
+
+  // front
+  group->add( new Triangle(E, A, H, mat) );
+  group->add( new Triangle(D, H, A, mat) );
+
+
+  // floor
+  group->add( new Triangle(E, G, F, mat) );
+  group->add( new Triangle(G, E, H, mat) );
+
+  // ceiling
+  group->add( new Triangle(A, B, C, mat) );
+  group->add( new Triangle(C, D, A, mat) );
+
+
+  // left
+  group->add( new Triangle(A, E, B, mat) );
+  group->add( new Triangle(B, E, F, mat) );
+
+  // right
+  group->add( new Triangle(D, C, H, mat) );
+  group->add( new Triangle(C, G, H, mat) );
+
+  return group;
+}
 
 #endif /* DEF_OBJECT */
