@@ -35,6 +35,33 @@ class Vector {
 
     inline Vector unit() const;
 
+    // rotation - by the angles defined in the vector arg
+    inline Vector rotate(const Vector &v) {
+
+      // around x
+      float cosx = cos(v.x);
+      float sinx = sin(v.x);
+      float ny = y * cosx - z * sinx;
+      float nz = z * cosx + y * sinx;
+
+      // around y
+      float cosy = cos(v.y);
+      float siny = sin(v.y);
+      float oldz = nz;
+      float nx = x * cosy + nz * siny;
+      nz = oldz * cosy - x * siny;
+
+      // around z
+      float cosz = cos(v.z);
+      float sinz = sin(v.z);
+      float oldx = nx;
+      float oldy = ny;
+      nx = oldx * cosz - oldy * sinz;
+      ny = oldy * cosz + oldx * sinz;
+
+      return Vector(nx, ny, nz);
+    }
+
     inline int* toRGB(float gamma=1.0){
       return new int[3] {
         int(255*pow(x, 1.0/gamma)),

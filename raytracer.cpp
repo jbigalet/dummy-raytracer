@@ -32,10 +32,10 @@ int main() {
   /* int height = 1080/8; */
 
   /* int width = 1920/4; */
-  int height = 1080/4;
+  /* int height = 1080/4; */
 
   /* int width = 1920/2; */
-  /* int height = 1080/2; */
+  int height = 1080/2;
 
   /* int width = 1920; */
   /* int height = 1080; */
@@ -52,10 +52,10 @@ int main() {
   /* int nsamples = 20; */
   /* int nsamples = 50; */
   /* int nsamples = 100; */
-  int nsamples = 200;
+  /* int nsamples = 200; */
   /* int nsamples = 500; */
   /* int nsamples = 1000; */
-  /* int nsamples = 2000; */
+  int nsamples = 2000;
   /* int nsamples = 5000; */
   /* int nsamples = 10000; */
 
@@ -197,7 +197,15 @@ int main() {
   // stuff inside the box
 
   /* world->add( box(Vector(-0.7, -0.2, 0.2), 0.5, 0.5, 0.5, new Metal(new ConstantTexture(0.9, 0.9, 0.9), 0.01)) ); */
-  world->add( box(Vector(-0.8, -0.4, 0.2), 0.5, 0.5, 0.5, new Lambertian(new ConstantTexture(0.1, 0.2, 0.95))) );
+  world->add( box(new Lambertian(new ConstantTexture(0.1, 0.2, 0.95)),
+                  Vector(-0.6, -0.1, 0.1),
+                  Vector(0.5, 0.8, 0.5),
+                  Vector(0.f, -20.f, 0.f)) );
+
+  world->add( box(new Lambertian(new ConstantTexture(1, 1, 1)),
+        Vector(0., -0.5, -0.7),
+        Vector(0.5, 0.5, 0.5),
+        Vector(0.f, 15.f, 0.f)) );
 
 
   // start job threads

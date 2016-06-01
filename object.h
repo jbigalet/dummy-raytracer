@@ -269,9 +269,10 @@ class Triangle: public Object {
 
 // 'Fake primitive' - alternative constructors
 
-inline ObjectGroup* box(Vector orig,
-                        float width, float height, float depth,
-                        Material *mat) {
+inline ObjectGroup* box(Material *mat, Vector orig,
+                        Vector size=VECTOR_ONE,
+                        Vector rotation=VECTOR_ZERO  // in deg
+                        ) {
 
   ObjectGroup* group = new ObjectGroup();
 
@@ -280,18 +281,37 @@ inline ObjectGroup* box(Vector orig,
   //  | F-|-G
   //  E/--H/
 
+  // dirs
+
+  Vector X = Vector(size.x, 0, 0);
+  Vector Y = Vector(0, size.y, 0);
+  Vector Z = Vector(0, 0, size.z);
+
+
+  // apply rotations
+
+  Vector rotRad = rotation*(M_PI/180.);
+  X = X.rotate(rotRad);
+  Y = Y.rotate(rotRad);
+  Z = Z.rotate(rotRad);
+
+
+  // vertices
+
   Vector A = orig;
 
-  Vector B = A + Vector(0, 0, depth);
+  Vector B = A + Z;
 
-  Vector C = B + Vector(width, 0, 0);
-  Vector D = A + Vector(width, 0, 0);
+  Vector C = B + X;
+  Vector D = A + X;
 
-  Vector E = A + Vector(0, -height, 0);
-  Vector F = B + Vector(0, -height, 0);
-  Vector G = C + Vector(0, -height, 0);
-  Vector H = D + Vector(0, -height, 0);
+  Vector E = A - Y;
+  Vector F = B - Y;
+  Vector G = C - Y;
+  Vector H = D - Y;
 
+
+  // walls
 
   // back
   group->add( new Triangle(F, G, B, mat) );
