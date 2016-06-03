@@ -34,6 +34,7 @@ int main() {
 
   /* int width = 1920/4; */
   int height = 1080/4;
+  /* int height = 50; */
 
   /* int width = 1920/2; */
   /* int height = 1080/2; */
@@ -49,8 +50,9 @@ int main() {
 
   int width = height;
 
-  /* int nsamples = 10; */
-  int nsamples = 20;
+  /* int nsamples = 4; */
+  int nsamples = 10;
+  /* int nsamples = 20; */
   /* int nsamples = 50; */
   /* int nsamples = 100; */
   /* int nsamples = 200; */
@@ -60,7 +62,9 @@ int main() {
   /* int nsamples = 5000; */
   /* int nsamples = 10000; */
 
-  int max_bounces = 10;
+  /* int max_bounces = 2; */
+  int max_bounces = 5;
+  /* int max_bounces = 10; */
   /* int max_bounces = 100; */
 
   std::ofstream image;
@@ -199,15 +203,15 @@ int main() {
 
   /* world->add( box(Vector(-0.7, -0.2, 0.2), 0.5, 0.5, 0.5, new Metal(new ConstantTexture(0.9, 0.9, 0.9), 0.01)) ); */
   for(int i=0 ; i<100 ; i++){
-  world->extend( box(new Lambertian(new ConstantTexture(0.1, 0.2, 0.95)),
-                  Vector(-0.6, -0.1, 0.1),
-                  Vector(0.5, 0.8, 0.5),
-                  Vector(0.f, -20.f, 0.f))->list );
+    world->extend( box(new Lambertian(new ConstantTexture(0.1, 0.2, 0.95)),
+                    Vector(-0.6, -0.1, 0.1),
+                    Vector(0.5, 0.8, 0.5),
+                    Vector(0.f, -20.f, 0.f))->list );
 
-  world->extend( box(new Lambertian(new ConstantTexture(1, 1, 1)),
-        Vector(0., -0.5, -0.7),
-        Vector(0.5, 0.5, 0.5),
-        Vector(0.f, 15.f, 0.f))->list );
+    world->extend( box(new Lambertian(new ConstantTexture(1, 1, 1)),
+          Vector(0., -0.5, -0.7),
+          Vector(0.5, 0.5, 0.5),
+          Vector(0.f, 15.f, 0.f))->list );
   }
 
 
@@ -237,6 +241,7 @@ int main() {
       out[ithread][i] = new Vector[height];
 
     threads[ithread] = std::thread(rt_pass, camera, bhv_world, width, height, max_bounces, nsamples/nthreads, out[ithread]);
+    /* threads[ithread] = std::thread(rt_pass, camera, world, width, height, max_bounces, nsamples/nthreads, out[ithread]); */
   }
 
 
@@ -261,8 +266,16 @@ int main() {
   auto endTime = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double, std::milli> totalTime = endTime - startTime;
   std::cout << "\nTotal: " << totalTime.count() << " ms" << std::endl;
+  std::cout << "\nTriangle intersections: " << nTriangleIntersection/1000000.f << "M" << std::endl;
+  std::cout << "BHV intersection: " << nBoxIntersection/1000000.f << "M" << std::endl;
+
+  std::cout << "\nTriangle intersection per ray: " << nTriangleIntersection/float(nTotalRay) << std::endl;
+  std::cout << "BHV intersection per ray: " << nBoxIntersection/float(nTotalRay) << std::endl;
+
+  std::cout << "\nAverage bounce: " << nTotalRay/float(nDirectRay) << std::endl;
+
   std::cout << "\nDirect rays: " << nDirectRay << std::endl;
-  std::cout << "Total rays: " << nTotalRay << "" << std::endl;
+  std::cout << "Total rays: " << nTotalRay << std::endl;
   std::cout << "\nRay per seconds: " << nTotalRay/totalTime.count() << " k" << std::endl;
 
   return 0;

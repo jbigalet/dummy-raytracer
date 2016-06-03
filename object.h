@@ -7,6 +7,7 @@
 #include <algorithm>
 
 #include "vector.h"
+#include "stats.h"
 
 class Ray;
 class Material;
@@ -79,7 +80,7 @@ class AABB : public Object {
         float tmax = (vmax[i] - ray.orig[i])/ray.dir[i];
         if(ray.dir[i] < 0.0f)
           std::swap(tmin, tmax);
-        if(std::max(t_max, tmax) < std::min(tmin, t_min))
+        if(std::min(t_max, tmax) < std::max(tmin, t_min))
           return NULL;
       }
 
@@ -287,6 +288,8 @@ class Triangle: public Object {
     }
 
     HitRecord *hit(Ray ray, float t_min, float t_max) {
+      nTriangleIntersection++;
+
       float ND = norm%ray.dir;
 
       if(ND > -0.0001f)   // TODO change that if we want dielectric triangles
@@ -351,6 +354,8 @@ class Triangle: public Object {
     }
 
     HitRecord *hit(Ray ray, float t_min, float t_max) {
+      nTriangleIntersection++;
+
       Vector P = ray.dir*e2;
       float det = e1%P;
 
@@ -434,6 +439,8 @@ class BHV : public Object {
     }
 
     HitRecord *hit(Ray ray, float t_min, float t_max) {
+      nBoxIntersection++;
+
       HitRecord* dummyRec = box.hit(ray, t_min, t_max); // TODO change by a bool returning function
       if(dummyRec != NULL){
         delete dummyRec;
@@ -462,11 +469,10 @@ class BHV : public Object {
     }
 
     inline std::string str(std::string indent="") {
-      return indent + "BHV[\n"
+      return indent + "BHV[\n" + box.str(indent+"==>")
              + left->str(indent+"  ") + ",\n"
              + right->str(indent+"  ") + "\n"
-             + indent + "]\n"
-             + indent + "--\n" + box.str(indent+"==>");
+             + indent + "]\n";
     }
 };
 
@@ -546,6 +552,6 @@ inline ObjectGroup* box(Material *mat, Vector orig,
   group->add( new Triangle(C, G, H, mat) );
 
   return group;
-}
+};
 
 #endif /* DEF_OBJECT */

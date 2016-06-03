@@ -1,9 +1,7 @@
 #include "ray.h"
 #include "material.h"
 #include "object.h"
-
-#include <atomic>
-extern std::atomic<long> nTotalRay;
+#include "stats.h"
 
 Vector Ray::color(Object &obj, int max_bounce){
   nTotalRay++;  // @stats

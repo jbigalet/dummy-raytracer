@@ -3,7 +3,9 @@
 
 #include <atomic>
 
-std::atomic<long> nDirectRay(0);
-std::atomic<long> nTotalRay(0);
+extern std::atomic<long> nDirectRay;
+extern std::atomic<long> nTotalRay;
+extern std::atomic<long> nTriangleIntersection;
+extern std::atomic<long> nBoxIntersection;
 
 #endif /* DEF_STATS */

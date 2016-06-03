@@ -1,5 +1,5 @@
 #ifndef DEF_CAMERA
-#define DEF_CAMERA 
+#define DEF_CAMERA
 
 #include <stdlib.h>
 #include <cmath>
