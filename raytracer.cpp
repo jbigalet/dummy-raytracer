@@ -3,18 +3,19 @@
 #include <chrono>
 #include <thread>
 
+#include "stats.h"
 #include "vector.h"
+
 #include "material.h"
 #include "ray.h"
 #include "object.h"
 #include "camera.h"
 #include "texture.h"
-#include "stats.h"
 
-void rt_pass(Camera camera, ObjectGroup world, int width, int height, int max_bounces, int nsamples, Vector** out) {
+void rt_pass(Camera camera, Object* world, int width, int height, int max_bounces, int nsamples, Vector** out) {
   for(int i=0 ; i<width ; i++)
     for(int j=0 ; j<height ; j++)
-      out[i][j] = camera.getColor(world, i, j, max_bounces, nsamples);
+      out[i][j] = camera.getColor(*world, i, j, max_bounces, nsamples);
 }
 
 int main() {
@@ -32,10 +33,10 @@ int main() {
   /* int height = 1080/8; */
 
   /* int width = 1920/4; */
-  /* int height = 1080/4; */
+  int height = 1080/4;
 
   /* int width = 1920/2; */
-  int height = 1080/2;
+  /* int height = 1080/2; */
 
   /* int width = 1920; */
   /* int height = 1080; */
@@ -49,13 +50,13 @@ int main() {
   int width = height;
 
   /* int nsamples = 10; */
-  /* int nsamples = 20; */
+  int nsamples = 20;
   /* int nsamples = 50; */
   /* int nsamples = 100; */
   /* int nsamples = 200; */
   /* int nsamples = 500; */
   /* int nsamples = 1000; */
-  int nsamples = 2000;
+  /* int nsamples = 2000; */
   /* int nsamples = 5000; */
   /* int nsamples = 10000; */
 
@@ -197,15 +198,34 @@ int main() {
   // stuff inside the box
 
   /* world->add( box(Vector(-0.7, -0.2, 0.2), 0.5, 0.5, 0.5, new Metal(new ConstantTexture(0.9, 0.9, 0.9), 0.01)) ); */
-  world->add( box(new Lambertian(new ConstantTexture(0.1, 0.2, 0.95)),
+  for(int i=0 ; i<100 ; i++){
+  world->extend( box(new Lambertian(new ConstantTexture(0.1, 0.2, 0.95)),
                   Vector(-0.6, -0.1, 0.1),
                   Vector(0.5, 0.8, 0.5),
-                  Vector(0.f, -20.f, 0.f)) );
+                  Vector(0.f, -20.f, 0.f))->list );
 
-  world->add( box(new Lambertian(new ConstantTexture(1, 1, 1)),
+  world->extend( box(new Lambertian(new ConstantTexture(1, 1, 1)),
         Vector(0., -0.5, -0.7),
         Vector(0.5, 0.5, 0.5),
-        Vector(0.f, 15.f, 0.f)) );
+        Vector(0.f, 15.f, 0.f))->list );
+  }
+
+
+
+  // convert world to a BHV
+  /* BHV* bhv_world = new BHV(&world->list[0], world->list.size()); */
+  BHV* bhv_world = new BHV(world->list);
+
+  /* std::cout << bhv_world->str() << std::endl; */
+  /* std::cout << bhv_world->bounding_box()->str() << std::endl; */
+  /* std::cout << bhv_world->left->bounding_box()->str() << std::endl; */
+  /* std::cout << bhv_world->right->bounding_box()->str() << std::endl; */
+
+
+  auto bhvTime = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double, std::milli> totalBHVtime = bhvTime - startTime;
+  std::cout << "\nBHV in: " << totalBHVtime.count() << " ms" << std::endl;
+  startTime = std::chrono::high_resolution_clock::now();
 
 
   // start job threads
@@ -216,7 +236,7 @@ int main() {
     for(int i=0 ; i<width ; i++)
       out[ithread][i] = new Vector[height];
 
-    threads[ithread] = std::thread(rt_pass, camera, *world, width, height, max_bounces, nsamples/nthreads, out[ithread]);
+    threads[ithread] = std::thread(rt_pass, camera, bhv_world, width, height, max_bounces, nsamples/nthreads, out[ithread]);
   }
 
 
@@ -240,10 +260,10 @@ int main() {
 
   auto endTime = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double, std::milli> totalTime = endTime - startTime;
-  std::cout << "\nTotal: " << totalTime.count() << " ms\n";
-  std::cout << "\nDirect rays: " << nDirectRay;
-  std::cout << "\nTotal rays: " << nTotalRay << "\n";
-  std::cout << "\nRay per seconds: " << nTotalRay/totalTime.count() << " k\n";
+  std::cout << "\nTotal: " << totalTime.count() << " ms" << std::endl;
+  std::cout << "\nDirect rays: " << nDirectRay << std::endl;
+  std::cout << "Total rays: " << nTotalRay << "" << std::endl;
+  std::cout << "\nRay per seconds: " << nTotalRay/totalTime.count() << " k" << std::endl;
 
   return 0;
 }

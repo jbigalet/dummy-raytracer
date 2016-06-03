@@ -4,6 +4,7 @@
 #include <math.h>
 #include <list>
 #include <vector>
+#include <algorithm>
 
 #include "vector.h"
 
@@ -26,11 +27,79 @@ struct HitRecord {
   float v;
 };
 
+
+class AABB;
+
 class Object {
   public:
     ~Object() {}
 
     virtual HitRecord* hit(Ray ray, float t_min, float t_max) = 0;
+    virtual AABB* bounding_box() = 0;
+
+    virtual inline std::string str(std::string indent="") {
+      return indent + "<object>";
+    }
+};
+
+
+// axis aligned bounding box
+class AABB : public Object {
+  public:
+    Vector vmin;
+    Vector vmax;
+
+    AABB() {};
+    AABB(Vector vmin, Vector vmax) : vmin(vmin), vmax(vmax) {}
+
+    inline AABB operator&(const AABB &box) {
+      return AABB(
+          Vector(
+            fmin(vmin.x, box.vmin.x),
+            fmin(vmin.y, box.vmin.y),
+            fmin(vmin.z, box.vmin.z)
+            ),
+
+          Vector(
+            fmax(vmax.x, box.vmax.x),
+            fmax(vmax.y, box.vmax.y),
+            fmax(vmax.z, box.vmax.z)
+            )
+          );
+    }
+
+
+    AABB* bounding_box(){
+      return this;
+    }
+
+    HitRecord *hit(Ray ray, float t_min, float t_max) {
+      for(int i=0 ; i<3 ; i++){
+        float tmin = (vmin[i] - ray.orig[i])/ray.dir[i];
+        float tmax = (vmax[i] - ray.orig[i])/ray.dir[i];
+        if(ray.dir[i] < 0.0f)
+          std::swap(tmin, tmax);
+        if(std::max(t_max, tmax) < std::min(tmin, t_min))
+          return NULL;
+      }
+
+      // we dont care about lots of stuff since we'll only be using this in our BHV
+      // TODO replace this with a dummy constant, or boolean returning function
+      return new HitRecord(
+          0.0f,
+          VECTOR_ZERO,
+          VECTOR_ZERO,
+          NULL,
+          0.0f,
+          0.0f
+      );
+    }
+
+    inline std::string str(std::string indent="") {
+      return indent + "AABB:\n"
+              + indent + "  min: " + vmin.str()
+              + indent + "  max: " + vmax.str();
+    }
 };
 
 
@@ -46,7 +115,13 @@ class ObjectGroup : public Object {
       /* list.clear(); */
     }
 
-    void add(Object *obj) { list.push_back(obj); }
+    void add(Object *obj) {
+      list.push_back(obj);
+    }
+
+    void extend(std::vector<Object*> toappend) {
+      list.insert(list.end(), toappend.begin(), toappend.end());
+    }
 
     HitRecord *hit(Ray ray, float t_min, float t_max) {
       HitRecord *bestHit = NULL;
@@ -58,6 +133,14 @@ class ObjectGroup : public Object {
         }
       }
       return bestHit;
+    }
+
+    AABB* bounding_box(){
+      return NULL;  // TODO? we dont really care atm
+    }
+
+    inline std::string str(std::string indent="") {
+      return indent + "ObjectGroup";
     }
 };
 
@@ -72,6 +155,13 @@ class Sphere : public Object {
 
     Sphere(Vector center, float radius, Material *material)
       : center(center), radius(radius), material(material) {}
+
+    AABB* bounding_box(){
+      return new AABB(
+          center - Vector(radius, radius, radius),
+          center + Vector(radius, radius, radius)
+      );
+    }
 
     HitRecord *hit(Ray ray, float t_min, float t_max) {
       Vector oc = ray.orig - center;
@@ -123,6 +213,10 @@ class Sphere : public Object {
           v
       );
     }
+
+    inline std::string str(std::string indent="") {
+      return indent + "Sphere";
+    }
 };
 
 
@@ -134,6 +228,10 @@ class Plane: public Object {
 
     Plane(Vector point, Vector norm, Material *material)
       : point(point), norm(norm), material(material) {}
+
+    AABB* bounding_box(){
+      return NULL;  // we could have an infinte bounding box. well..
+    }
 
     HitRecord *hit(Ray ray, float t_min, float t_max) {
       float ND = norm%ray.dir;
@@ -152,6 +250,10 @@ class Plane: public Object {
         );
 
       return NULL;
+    }
+
+    inline std::string str(std::string indent="") {
+      return indent + "Plane";
     }
 };
 
@@ -175,6 +277,13 @@ class Triangle: public Object {
       A = c - b;
 
       norm = -(C*B).unit();
+    }
+
+    AABB* bounding_box(){
+      return new AABB(  // TODO replace min & max function with *args
+          min(a, min(b, c)),
+          max(a, max(b, c))
+      );
     }
 
     HitRecord *hit(Ray ray, float t_min, float t_max) {
@@ -208,6 +317,10 @@ class Triangle: public Object {
 
       return NULL;
     }
+
+    inline std::string str(std::string indent="") {
+      return indent + "Triangle";
+    }
 };
 
 
@@ -218,16 +331,23 @@ class Triangle: public Object {
 
 class Triangle: public Object {
   public:
-    Vector a;
+    Vector a, b, c;  // TODO only storing b & c for the bounding box =|
     Material *material;
 
     Vector norm;
     Vector e1, e2;
 
-    Triangle(Vector a, Vector b, Vector c, Material *material) : a(a), material(material) {
+    Triangle(Vector a, Vector b, Vector c, Material *material) : a(a), b(b), c(c), material(material) {
       e1 = b - a;
       e2 = c - a;
       norm = (e1*e2).unit();
+    }
+
+    AABB* bounding_box() {
+      return new AABB(  // TODO replace min & max function with *args
+          min(a, min(b, c)),
+          max(a, max(b, c))
+          );
     }
 
     HitRecord *hit(Ray ray, float t_min, float t_max) {
@@ -261,9 +381,95 @@ class Triangle: public Object {
 
       return NULL;
     }
+
+    inline std::string str(std::string indent="") {
+      return indent + "Triangle:\n"
+             + indent + "  " + a.str() + ",\n"
+             + indent + "  " + b.str() + ",\n"
+             + indent + "  " + c.str() + "\n";
+    }
 };
 
 #endif  // NO_MOLLER_TRUMBORE
+
+
+class BHV : public Object {
+  public:
+    AABB box;
+
+    Object* left;
+    Object* right;
+
+    BHV(std::vector<Object*> list) {
+      int size = list.size();
+
+      if(size < 2){
+        std::cerr << "BHV init: should not have less than 2 objects" << std::endl;
+        exit(1);
+      }
+
+      if(size == 2){
+        left = list[0];
+        right = list[1];
+      } else {
+
+        // sort around a random axis
+        int axis = int(RANDOM_FLOAT);
+        std::sort(list.begin(), list.end(), [axis] (Object* a, Object* b) {
+          return (*(b->bounding_box())).vmin[axis] < (*(a->bounding_box())).vmin[axis];
+        });
+
+        if(size == 3)
+          left = list[0];  // we want to avoid BHV node with only 1 object
+        else
+          left = new BHV(std::vector<Object*>(list.begin(), list.begin()+size/2));
+        right = new BHV(std::vector<Object*>(list.begin() + size/2, list.begin() + (2*size+1)/2));
+      }
+
+      box = (*left->bounding_box()) & (*right->bounding_box());  // union of both bounding boxes
+    }
+
+    AABB *bounding_box() {
+      return &box;
+    }
+
+    HitRecord *hit(Ray ray, float t_min, float t_max) {
+      HitRecord* dummyRec = box.hit(ray, t_min, t_max); // TODO change by a bool returning function
+      if(dummyRec != NULL){
+        delete dummyRec;
+
+        HitRecord* rec_left = left->hit(ray, t_min, t_max);
+        HitRecord* rec_right = right->hit(ray, t_min, t_max);
+
+        if(rec_left != NULL){
+          if(rec_right != NULL){
+            if(rec_left->t < rec_right->t){
+              delete rec_right;
+              return rec_left;
+            } else {
+              delete rec_left;
+              return rec_right;
+            }
+          }
+          return rec_left;
+        }
+
+        if(rec_right != NULL)
+          return rec_right;
+      }
+
+      return NULL;
+    }
+
+    inline std::string str(std::string indent="") {
+      return indent + "BHV[\n"
+             + left->str(indent+"  ") + ",\n"
+             + right->str(indent+"  ") + "\n"
+             + indent + "]\n"
+             + indent + "--\n" + box.str(indent+"==>");
+    }
+};
+
 
 
 

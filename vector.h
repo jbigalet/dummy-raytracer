@@ -83,11 +83,21 @@ class Vector {
       z = z/(z+1);
     }
 
+    inline std::string str(){
+      return "[" + std::to_string(x) + ", " + std::to_string(y) + ", " + std::to_string(z) + "]";
+    }
 
 // Operators
 
     inline Vector operator+() const { return *this; }
     inline Vector operator-() const { return Vector(-x, -y, -z); }
+
+    inline float operator[] (int i){
+      if(i==0) return x;
+      if(i==1) return y;
+      if(i==2) return z;
+      return 0.f;  // should not happen - to avoid Wall bitching about it
+    }
 
 
 // Assignment operators
@@ -185,6 +195,21 @@ inline Vector* refract(const Vector &v, const Vector &norm, float iratio) {
   return new Vector(iratio*(v-norm*cosI) - norm*sqrt(1.f - sinT2));
 }
 
+inline Vector min(const Vector &v1, const Vector &v2){
+  return Vector(
+      fmin(v1.x, v2.x),
+      fmin(v1.y, v2.y),
+      fmin(v1.z, v2.z)
+  );
+}
+
+inline Vector max(const Vector &v1, const Vector &v2){
+  return Vector(
+      fmax(v1.x, v2.x),
+      fmax(v1.y, v2.y),
+      fmax(v1.z, v2.z)
+  );
+}
 
 inline Vector Vector::unit() const { return (*this)/length(); }
 
