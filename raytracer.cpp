@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <cstdio>
 #include <chrono>
 #include <thread>
 
@@ -13,9 +14,11 @@
 #include "texture.h"
 
 void rt_pass(Camera camera, Object* world, int width, int height, int max_bounces, int nsamples, Vector** out) {
-  for(int i=0 ; i<width ; i++)
+  for(int i=0 ; i<width ; i++){
+    std::cout << i << std::endl;
     for(int j=0 ; j<height ; j++)
       out[i][j] = camera.getColor(*world, i, j, max_bounces, nsamples);
+  }
 }
 
 int main() {
@@ -51,8 +54,8 @@ int main() {
   int width = height;
 
   /* int nsamples = 4; */
-  int nsamples = 10;
-  /* int nsamples = 20; */
+  /* int nsamples = 10; */
+  int nsamples = 20;
   /* int nsamples = 50; */
   /* int nsamples = 100; */
   /* int nsamples = 200; */
@@ -97,7 +100,7 @@ int main() {
   Camera camera(
       width,
       height,
-      Vector(0, 0, -3.8f),
+      Vector(0, 0, -3),
       Vector(0, 0, 0),
       Vector(0, 1, 0),
       40
@@ -202,16 +205,66 @@ int main() {
   // stuff inside the box
 
   /* world->add( box(Vector(-0.7, -0.2, 0.2), 0.5, 0.5, 0.5, new Metal(new ConstantTexture(0.9, 0.9, 0.9), 0.01)) ); */
-  for(int i=0 ; i<100 ; i++){
-    world->extend( box(new Lambertian(new ConstantTexture(0.1, 0.2, 0.95)),
-                    Vector(-0.6, -0.1, 0.1),
-                    Vector(0.5, 0.8, 0.5),
-                    Vector(0.f, -20.f, 0.f))->list );
+  /* for(int i=0 ; i<100 ; i++){ */
+  /*   world->extend( box(new Lambertian(new ConstantTexture(0.1, 0.2, 0.95)), */
+  /*                   Vector(-0.6, -0.1, 0.1), */
+  /*                   Vector(0.5, 0.8, 0.5), */
+  /*                   Vector(0.f, -20.f, 0.f))->list ); */
 
-    world->extend( box(new Lambertian(new ConstantTexture(1, 1, 1)),
-          Vector(0., -0.5, -0.7),
-          Vector(0.5, 0.5, 0.5),
-          Vector(0.f, 15.f, 0.f))->list );
+  /*   world->extend( box(new Lambertian(new ConstantTexture(1, 1, 1)), */
+  /*         Vector(0., -0.5, -0.7), */
+  /*         Vector(0.5, 0.5, 0.5), */
+  /*         Vector(0.f, 15.f, 0.f))->list ); */
+  /* } */
+
+
+  // obj loading tests
+  // http://www.opengl-tutorial.org/beginners-tutorials/tutorial-7-model-loading/
+
+
+  Material* objMat = new Lambertian(new ConstantTexture(0.1f, 0.2f, 0.8f));
+
+  std::vector<Vector> vertices;
+  /* std::vector<Vector> normals; */
+  /* std::vector<Vector> texturecoords; */
+  /* std::vector<Vector> faces; */
+
+  world = new ObjectGroup();
+
+  std::ifstream file("cow.obj");
+  std::string str;
+  while (std::getline(file, str)) {
+
+    // vertices
+    if( str.find("v ") == 0){
+      float a, b, c;
+      sscanf(str.c_str(), "v %f %f %f", &a, &b, &c);
+      vertices.push_back(Vector(a, b, c));
+
+    // faces (ie triangles)
+    } else if( str.find("f ") == 0){
+      long a, b, c;
+      /* sscanf(str.c_str(), "f %ld/%*s %ld/%*s %ld/%*s", &a, &b, &c); */
+      sscanf(str.c_str(), "f %ld %ld %ld", &a, &b, &c);
+
+      unsigned long A, B, C;
+      A = a > 0 ? a-1 : vertices.size()+a;
+      B = b > 0 ? b-1 : vertices.size()+b;
+      C = c > 0 ? c-1 : vertices.size()+c;
+
+      if(A > vertices.size()  || A < 0
+          || B > vertices.size() || B < 0
+          || C > vertices.size() || C < 0){
+        std::cerr << "NOPE " << A  << " " << B << " "  << C << " "  << vertices.size() << std::endl;
+        std::cerr << str << std::endl;
+        exit(1);
+      }
+
+      world->add( new Triangle(vertices[A],
+                               vertices[B],
+                               vertices[C],
+                               objMat) );
+    }
   }
 
 
