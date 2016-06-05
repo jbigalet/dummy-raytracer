@@ -41,6 +41,10 @@ class Object {
     virtual inline std::string str(std::string indent="") {
       return indent + "<object>";
     }
+
+    virtual inline int depth() {
+      return 1;
+    }
 };
 
 
@@ -76,11 +80,13 @@ class AABB : public Object {
 
     HitRecord *hit(Ray ray, float t_min, float t_max) {
       for(int i=0 ; i<3 ; i++){
-        float tmin = (vmin[i] - ray.orig[i])/ray.dir[i];
-        float tmax = (vmax[i] - ray.orig[i])/ray.dir[i];
-        if(ray.dir[i] < 0.0f)
-          std::swap(tmin, tmax);
-        if(std::min(t_max, tmax) < std::max(tmin, t_min))
+        float t0 = (vmin[i] - ray.orig[i])/ray.dir[i];
+        float t1 = (vmax[i] - ray.orig[i])/ray.dir[i];
+        if(ray.dir[i] < 0.f)
+          std::swap(t0, t1);
+        t_min = t0 > t_min ? t0 : t_min;
+        t_max = t1 < t_max ? t1 : t_max;
+        if(t_max <= t_min - 0.001f)  // epsilon to avoid some floating point rounding stuff 'hiding' some axis aligned triangles
           return NULL;
       }
 
@@ -350,7 +356,7 @@ class Triangle: public Object {
       return new AABB(  // TODO replace min & max function with *args
           min(a, min(b, c)),
           max(a, max(b, c))
-          );
+      );
     }
 
     HitRecord *hit(Ray ray, float t_min, float t_max) {
@@ -419,7 +425,8 @@ class BHV : public Object {
       } else {
 
         // sort around a random axis
-        int axis = int(RANDOM_FLOAT);
+        int axis = int(3*RANDOM_FLOAT);
+        /* int axis = 2; */
         std::sort(list.begin(), list.end(), [axis] (Object* a, Object* b) {
           return (*(b->bounding_box())).vmin[axis] < (*(a->bounding_box())).vmin[axis];
         });
@@ -444,6 +451,8 @@ class BHV : public Object {
       HitRecord* dummyRec = box.hit(ray, t_min, t_max); // TODO change by a bool returning function
       if(dummyRec != NULL){
         delete dummyRec;
+
+        /* std::cout << "hit " << box.str() << " with " << ray.orig << " - dir " << ray.dir << std::endl; */
 
         HitRecord* rec_left = left->hit(ray, t_min, t_max);
         HitRecord* rec_right = right->hit(ray, t_min, t_max);
@@ -473,6 +482,10 @@ class BHV : public Object {
              + left->str(indent+"  ") + ",\n"
              + right->str(indent+"  ") + "\n"
              + indent + "]\n";
+    }
+
+    inline int depth() {
+      return std::max(left->depth(), right->depth()) + 1;
     }
 };
 

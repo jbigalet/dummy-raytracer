@@ -15,7 +15,7 @@
 
 void rt_pass(Camera camera, Object* world, int width, int height, int max_bounces, int nsamples, Vector** out) {
   for(int i=0 ; i<width ; i++){
-    std::cout << i << std::endl;
+    /* std::cout << i << std::endl; */
     for(int j=0 ; j<height ; j++)
       out[i][j] = camera.getColor(*world, i, j, max_bounces, nsamples);
   }
@@ -55,10 +55,10 @@ int main() {
 
   /* int nsamples = 4; */
   /* int nsamples = 10; */
-  int nsamples = 20;
+  /* int nsamples = 20; */
   /* int nsamples = 50; */
   /* int nsamples = 100; */
-  /* int nsamples = 200; */
+  int nsamples = 200;
   /* int nsamples = 500; */
   /* int nsamples = 1000; */
   /* int nsamples = 2000; */
@@ -100,7 +100,8 @@ int main() {
   Camera camera(
       width,
       height,
-      Vector(0, 0, -3),
+      Vector(0, 0, -3.f),
+      /* Vector(0, 0, -3.8f), */
       Vector(0, 0, 0),
       Vector(0, 1, 0),
       40
@@ -206,15 +207,15 @@ int main() {
 
   /* world->add( box(Vector(-0.7, -0.2, 0.2), 0.5, 0.5, 0.5, new Metal(new ConstantTexture(0.9, 0.9, 0.9), 0.01)) ); */
   /* for(int i=0 ; i<100 ; i++){ */
-  /*   world->extend( box(new Lambertian(new ConstantTexture(0.1, 0.2, 0.95)), */
-  /*                   Vector(-0.6, -0.1, 0.1), */
-  /*                   Vector(0.5, 0.8, 0.5), */
-  /*                   Vector(0.f, -20.f, 0.f))->list ); */
+    world->extend( box(new Lambertian(new ConstantTexture(0.1, 0.2, 0.95)),
+                    Vector(-0.6, -0.1, 0.1),
+                    Vector(0.5, 0.8, 0.5),
+                    Vector(0.f, -20.f, 0.f))->list );
 
-  /*   world->extend( box(new Lambertian(new ConstantTexture(1, 1, 1)), */
-  /*         Vector(0., -0.5, -0.7), */
-  /*         Vector(0.5, 0.5, 0.5), */
-  /*         Vector(0.f, 15.f, 0.f))->list ); */
+    world->extend( box(new Lambertian(new ConstantTexture(1, 1, 1)),
+          Vector(0., -0.5, -0.7),
+          Vector(0.5, 0.5, 0.5),
+          Vector(0.f, 15.f, 0.f))->list );
   /* } */
 
 
@@ -223,6 +224,8 @@ int main() {
 
 
   Material* objMat = new Lambertian(new ConstantTexture(0.1f, 0.2f, 0.8f));
+  /* Material* objMat = new Metal(new ConstantTexture(0.6f, 0.6f, 0.6f), 0.03f); */
+  /* Material* objMat = new Light(new ConstantTexture(0.1f, 0.1f, 0.8f)); */
 
   std::vector<Vector> vertices;
   /* std::vector<Vector> normals; */
@@ -272,6 +275,8 @@ int main() {
   // convert world to a BHV
   /* BHV* bhv_world = new BHV(&world->list[0], world->list.size()); */
   BHV* bhv_world = new BHV(world->list);
+  std::cout << "Triangle count: " << world->list.size() << std::endl;
+  std::cout << "BHV depth: " << bhv_world->depth() << std::endl;
 
   /* std::cout << bhv_world->str() << std::endl; */
   /* std::cout << bhv_world->bounding_box()->str() << std::endl; */
@@ -298,7 +303,18 @@ int main() {
   }
 
 
-  // join threads
+  long totalDirectRay = width*height*nsamples;
+  int perc;
+  long lastTotalRay = 0;
+  while(perc != 100) {
+    perc = (nDirectRay*100)/totalDirectRay;
+    std::cout << "\r" << perc << " %" << "  -- " << (nTotalRay-lastTotalRay)/1000.f << "K ray per sec" << std::flush;
+    lastTotalRay = nTotalRay;
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+  }
+
+
+  // join threads - just in case
   for(int ithread=0 ; ithread<nthreads ; ithread++)
     threads[ithread].join();
 
@@ -318,7 +334,7 @@ int main() {
 
   auto endTime = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double, std::milli> totalTime = endTime - startTime;
-  std::cout << "\nTotal: " << totalTime.count() << " ms" << std::endl;
+  std::cout << "\n\nTotal: " << totalTime.count() << " ms" << std::endl;
   std::cout << "\nTriangle intersections: " << nTriangleIntersection/1000000.f << "M" << std::endl;
   std::cout << "BHV intersection: " << nBoxIntersection/1000000.f << "M" << std::endl;
 

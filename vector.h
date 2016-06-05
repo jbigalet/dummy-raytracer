@@ -96,7 +96,10 @@ class Vector {
       if(i==0) return x;
       if(i==1) return y;
       if(i==2) return z;
-      return 0.f;  // should not happen - to avoid Wall bitching about it
+
+      // should not happen - to avoid Wall bitching about it
+      std::cerr << "trying to access vector at index " << i << std::endl;
+      exit(1);
     }
 
 
