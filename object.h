@@ -411,14 +411,19 @@ class SmoothedTriangle : public Triangle {
   public:
     Vector na, nb, nc;
 
-    SmoothedTriangle(Vector a, Vector b, Vector c, Vector na, Vector nb, Vector nc, Material *material) : Triangle(a, b, c, material), na(na), nb(nb), nc(nc) {
-      e1 = b - a;
-      e2 = c - a;
+    SmoothedTriangle(Vector a, Vector b, Vector c, Material *material) : Triangle(a, b, c, material) {
+      na = VECTOR_ONE;
+      nb = VECTOR_ONE;
+      nc = VECTOR_ONE;
     }
+
+    SmoothedTriangle(Vector a, Vector b, Vector c, Vector na, Vector nb, Vector nc, Material *material) : Triangle(a, b, c, material), na(na), nb(nb), nc(nc) {}
 
     Vector normal(float u, float v){
       // Ray Tracing from the Ground Up p.479
       // u <=> beta, v <=> gamma
+
+      /* return norm; */
       return (
           (1-u-v) * na
           +  u    * nb

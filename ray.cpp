@@ -12,7 +12,9 @@ Vector Ray::color(Object &obj, int max_bounce){
   HitRecord *hit = obj.hit(*this, 0.0001f, FLT_MAX);
 
   if(hit != NULL){
-    /* return 0.5*Vector(hit->normal.x+1, hit->normal.y+1, hit->normal.z+1); */
+    // debug: normal map
+    return 0.5*Vector(hit->normal.x+1, hit->normal.y+1, hit->normal.z+1);
+
     Vector attenuation;
     Ray *scattered = hit->material->scatter(*this, *hit, attenuation);
 

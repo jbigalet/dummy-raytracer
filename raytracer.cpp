@@ -53,8 +53,8 @@ int main() {
 
   int width = height;
 
-  /* int nsamples = 4; */
-  int nsamples = 20;
+  int nsamples = 4;
+  /* int nsamples = 20; */
   /* int nsamples = 50; */
   /* int nsamples = 100; */
   /* int nsamples = 200; */
@@ -100,11 +100,11 @@ int main() {
       width,
       height,
       /* Vector(0, 0, -3.f),  // cow */
-      Vector(-0.5f, 1.f, -6.f),  // bunny
-      /* Vector(0, 0, -3.f),  // cornell box */
+      /* Vector(-0.5f, 1.f, -6.f),  // bunny */
+      Vector(0, 0, -3.8f),  // cornell box
       /* Vector(0, 0, -1.1f), */
-      Vector(-0.5f, 1.f, 0),  // bunny pos
-      /* Vector(0.f, 0.f, 0.f), */
+      /* Vector(-0.5f, 1.f, 0),  // bunny pos */
+      Vector(0.f, 0.f, 0.f),
       Vector(0, 1, 0),
       40
       );
@@ -232,20 +232,27 @@ int main() {
   std::vector<Vector> vertices;
   std::vector<Vector> normals;
   /* std::vector<Vector> texturecoords; */
-  /* std::vector<Vector> faces; */
+  std::vector<Vector> faces;  // computed normals indexed by vertices
+  std::vector<int> nfaces;  // number of faces by vertices - to average out the normal
 
-  world = new ObjectGroup();
+  ObjectGroup *obj = new ObjectGroup();
+  std::vector<SmoothedTriangle*> tosmooth;
 
-  std::ifstream file("bunny.obj");
+  std::ifstream file("cow.obj");
   /* std::ifstream file("bunny.obj"); */
   std::string str;
   while (std::getline(file, str)) {
+
+    bool gotnormals = false;
 
     // vertices
     if( str.find("v ") == 0){
       float a, b, c;
       sscanf(str.c_str(), "v %f %f %f", &a, &b, &c);
       vertices.push_back(Vector(a, b, c));
+
+      faces.push_back(VECTOR_ZERO);
+      nfaces.push_back(0);
 
     // vertice normals
     } else if( str.find("vn ") == 0){
@@ -259,12 +266,15 @@ int main() {
     } else if( str.find("f ") == 0){
       long a, b, c;
       long na, nb, nc;
-      if(str.find("//") != std::string::npos)
+      if(str.find("//") != std::string::npos){
+        gotnormals = true;
         sscanf(str.c_str(), "f %ld//%ld %ld//%ld %ld//%ld", &a, &na, &b, &nb, &c, &nc);
-      else if(str.find("/") != std::string::npos)
+      } else if(str.find("/") != std::string::npos) {
+        gotnormals = true;
         sscanf(str.c_str(), "f %ld/%*s/%ld %ld/%*s/%ld %ld/%*s/%ld", &a, &na, &b, &nb, &c, &nc);
-      else
+      } else {
         sscanf(str.c_str(), "f %ld %ld %ld", &a, &b, &c);
+      }
 
       unsigned long A, B, C;
       A = a > 0 ? a-1 : vertices.size()+a;
@@ -279,29 +289,67 @@ int main() {
         exit(1);
       }
 
-      unsigned long NA, NB, NC;
-      NA = na > 0 ? na-1 : normals.size()+na;
-      NB = nb > 0 ? nb-1 : normals.size()+nb;
-      NC = nc > 0 ? nc-1 : normals.size()+nc;
+      if(gotnormals) {
+        unsigned long NA, NB, NC;
+        NA = na > 0 ? na-1 : normals.size()+na;
+        NB = nb > 0 ? nb-1 : normals.size()+nb;
+        NC = nc > 0 ? nc-1 : normals.size()+nc;
 
-      if(NA > normals.size()  || NA < 0
-          || NB > normals.size() || NB < 0
-          || NC > normals.size() || NC < 0){
-        std::cerr << "NOPE normals " << NA  << " " << NB << " "  << NC << " "  << normals.size() << std::endl;
-        std::cerr << str << std::endl;
-        exit(1);
+        if(NA > normals.size()  || NA < 0
+            || NB > normals.size() || NB < 0
+            || NC > normals.size() || NC < 0){
+          std::cerr << "NOPE normals " << NA  << " " << NB << " "  << NC << " "  << normals.size() << std::endl;
+          std::cerr << str << std::endl;
+          exit(1);
+        }
+
+        obj->add( new SmoothedTriangle(  vertices[A],
+                                         vertices[B],
+                                         vertices[C],
+                                         normals[NA],
+                                         normals[NB],
+                                         normals[NC],
+                                         objMat) );
+      } else {
+        SmoothedTriangle* triangle = new SmoothedTriangle(
+             vertices[A],
+             vertices[B],
+             vertices[C],
+             objMat);
+        tosmooth.push_back(triangle);
+
+        faces[A] += triangle->norm;
+        faces[B] += triangle->norm;
+        faces[C] += triangle->norm;
+
+        nfaces[A] += 1;
+        nfaces[B] += 1;
+        nfaces[C] += 1;
       }
 
-      world->add( new SmoothedTriangle(vertices[A],
-                                       vertices[B],
-                                       vertices[C],
-                                       normals[NA],
-                                       normals[NB],
-                                       normals[NC],
-                                       objMat) );
     }
   }
 
+  // smooth triangles we dont have the normal for
+  for(int ivertice=0 ; ivertice<vertices.size() ; ivertice++){
+    Vector vertice = vertices[ivertice];
+    Vector norm = faces[ivertice]/nfaces[ivertice];
+    for(SmoothedTriangle* triangle: tosmooth){
+      if(vertice == triangle->a)
+        triangle->na = norm;
+      if(vertice == triangle->b)
+        triangle->nb = norm;
+      if(vertice == triangle->c)
+        triangle->nc = norm;
+    }
+  }
+
+  for(SmoothedTriangle* triangle: tosmooth)
+    obj->add(triangle);
+
+
+  world = new ObjectGroup();
+  world->extend(obj->list);
 
 
   // debug cube

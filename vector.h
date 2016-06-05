@@ -102,6 +102,12 @@ class Vector {
       exit(1);
     }
 
+    inline bool operator==(const Vector &v) {
+      return x == v.x
+          && y == v.y
+          && z == v.z;
+    }
+
 
 // Assignment operators
 
