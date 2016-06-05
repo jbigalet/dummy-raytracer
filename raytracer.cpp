@@ -58,9 +58,9 @@ int main() {
   /* int nsamples = 20; */
   /* int nsamples = 50; */
   /* int nsamples = 100; */
-  int nsamples = 200;
+  /* int nsamples = 200; */
   /* int nsamples = 500; */
-  /* int nsamples = 1000; */
+  int nsamples = 1000;
   /* int nsamples = 2000; */
   /* int nsamples = 5000; */
   /* int nsamples = 10000; */
@@ -100,9 +100,11 @@ int main() {
   Camera camera(
       width,
       height,
-      Vector(0, 0, -3.f),
-      /* Vector(0, 0, -3.8f), */
-      Vector(0, 0, 0),
+      /* Vector(0, 0, -3.f),  // cow */
+      /* Vector(-0.5f, 1.f, -6.f),  // bunny */
+      Vector(0, 0, -3.8f),  // cornell box
+      /* Vector(-0.5f, 1.f, 0), */
+      Vector(0.f, 0.f, 0.f),
       Vector(0, 1, 0),
       40
       );
@@ -223,8 +225,8 @@ int main() {
   // http://www.opengl-tutorial.org/beginners-tutorials/tutorial-7-model-loading/
 
 
-  Material* objMat = new Lambertian(new ConstantTexture(0.1f, 0.2f, 0.8f));
-  /* Material* objMat = new Metal(new ConstantTexture(0.6f, 0.6f, 0.6f), 0.03f); */
+    /* Material* objMat = new Lambertian(new ConstantTexture(0.1f, 0.2f, 0.8f)); */
+  Material* objMat = new Metal(new ConstantTexture(0.6f, 0.6f, 0.2f), 0.1f);
   /* Material* objMat = new Light(new ConstantTexture(0.1f, 0.1f, 0.8f)); */
 
   std::vector<Vector> vertices;
@@ -232,9 +234,10 @@ int main() {
   /* std::vector<Vector> texturecoords; */
   /* std::vector<Vector> faces; */
 
-  world = new ObjectGroup();
+  /* world = new ObjectGroup(); */
 
   std::ifstream file("cow.obj");
+  /* std::ifstream file("bunny.obj"); */
   std::string str;
   while (std::getline(file, str)) {
 
@@ -247,8 +250,10 @@ int main() {
     // faces (ie triangles)
     } else if( str.find("f ") == 0){
       long a, b, c;
-      /* sscanf(str.c_str(), "f %ld/%*s %ld/%*s %ld/%*s", &a, &b, &c); */
-      sscanf(str.c_str(), "f %ld %ld %ld", &a, &b, &c);
+      if(str.find("/") != std::string::npos)
+        sscanf(str.c_str(), "f %ld/%*s %ld/%*s %ld/%*s", &a, &b, &c);
+      else
+        sscanf(str.c_str(), "f %ld %ld %ld", &a, &b, &c);
 
       unsigned long A, B, C;
       A = a > 0 ? a-1 : vertices.size()+a;

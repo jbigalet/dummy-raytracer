@@ -411,7 +411,7 @@ class BHV : public Object {
     Object* left;
     Object* right;
 
-    BHV(std::vector<Object*> list) {
+    BHV(std::vector<Object*> list, int depth=0) {
       int size = list.size();
 
       if(size < 2){
@@ -425,7 +425,8 @@ class BHV : public Object {
       } else {
 
         // sort around a random axis
-        int axis = int(3*RANDOM_FLOAT);
+        int axis = depth%3;
+        /* int axis = int(3*RANDOM_FLOAT); */
         /* int axis = 2; */
         std::sort(list.begin(), list.end(), [axis] (Object* a, Object* b) {
           return (*(b->bounding_box())).vmin[axis] < (*(a->bounding_box())).vmin[axis];
@@ -434,8 +435,8 @@ class BHV : public Object {
         if(size == 3)
           left = list[0];  // we want to avoid BHV node with only 1 object
         else
-          left = new BHV(std::vector<Object*>(list.begin(), list.begin()+size/2));
-        right = new BHV(std::vector<Object*>(list.begin() + size/2, list.begin() + (2*size+1)/2));
+          left = new BHV(std::vector<Object*>(list.begin(), list.begin()+size/2), depth+1);
+        right = new BHV(std::vector<Object*>(list.begin() + size/2, list.begin() + (2*size+1)/2), depth+1);
       }
 
       box = (*left->bounding_box()) & (*right->bounding_box());  // union of both bounding boxes
