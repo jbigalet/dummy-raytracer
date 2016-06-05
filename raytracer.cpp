@@ -36,14 +36,14 @@ int main() {
   /* int height = 1080/8; */
 
   /* int width = 1920/4; */
-  int height = 1080/4;
+  /* int height = 1080/4; */
   /* int height = 50; */
 
   /* int width = 1920/2; */
   /* int height = 1080/2; */
 
   /* int width = 1920; */
-  /* int height = 1080; */
+  int height = 1080;
 
   /* int width = 1200; */
   /* int height = 600; */
@@ -54,13 +54,12 @@ int main() {
   int width = height;
 
   /* int nsamples = 4; */
-  /* int nsamples = 10; */
-  /* int nsamples = 20; */
+  int nsamples = 20;
   /* int nsamples = 50; */
   /* int nsamples = 100; */
   /* int nsamples = 200; */
   /* int nsamples = 500; */
-  int nsamples = 1000;
+  /* int nsamples = 1000; */
   /* int nsamples = 2000; */
   /* int nsamples = 5000; */
   /* int nsamples = 10000; */
@@ -101,10 +100,11 @@ int main() {
       width,
       height,
       /* Vector(0, 0, -3.f),  // cow */
-      /* Vector(-0.5f, 1.f, -6.f),  // bunny */
-      Vector(0, 0, -3.8f),  // cornell box
-      /* Vector(-0.5f, 1.f, 0), */
-      Vector(0.f, 0.f, 0.f),
+      Vector(-0.5f, 1.f, -6.f),  // bunny
+      /* Vector(0, 0, -3.f),  // cornell box */
+      /* Vector(0, 0, -1.1f), */
+      Vector(-0.5f, 1.f, 0),  // bunny pos
+      /* Vector(0.f, 0.f, 0.f), */
       Vector(0, 1, 0),
       40
       );
@@ -230,13 +230,13 @@ int main() {
   /* Material* objMat = new Light(new ConstantTexture(0.1f, 0.1f, 0.8f)); */
 
   std::vector<Vector> vertices;
-  /* std::vector<Vector> normals; */
+  std::vector<Vector> normals;
   /* std::vector<Vector> texturecoords; */
   /* std::vector<Vector> faces; */
 
-  /* world = new ObjectGroup(); */
+  world = new ObjectGroup();
 
-  std::ifstream file("cow.obj");
+  std::ifstream file("bunny.obj");
   /* std::ifstream file("bunny.obj"); */
   std::string str;
   while (std::getline(file, str)) {
@@ -247,11 +247,22 @@ int main() {
       sscanf(str.c_str(), "v %f %f %f", &a, &b, &c);
       vertices.push_back(Vector(a, b, c));
 
+    // vertice normals
+    } else if( str.find("vn ") == 0){
+        float na, nb, nc;
+        sscanf(str.c_str(), "vn %f %f %f", &na, &nb, &nc);
+        normals.push_back(Vector(na, nb, nc));
+        /* std::cout << Vector(na, nb, nc).length() << " na=" << na << " nb=" << nb << " nc=" << nc << std::endl; */
+
+
     // faces (ie triangles)
     } else if( str.find("f ") == 0){
       long a, b, c;
-      if(str.find("/") != std::string::npos)
-        sscanf(str.c_str(), "f %ld/%*s %ld/%*s %ld/%*s", &a, &b, &c);
+      long na, nb, nc;
+      if(str.find("//") != std::string::npos)
+        sscanf(str.c_str(), "f %ld//%ld %ld//%ld %ld//%ld", &a, &na, &b, &nb, &c, &nc);
+      else if(str.find("/") != std::string::npos)
+        sscanf(str.c_str(), "f %ld/%*s/%ld %ld/%*s/%ld %ld/%*s/%ld", &a, &na, &b, &nb, &c, &nc);
       else
         sscanf(str.c_str(), "f %ld %ld %ld", &a, &b, &c);
 
@@ -263,18 +274,39 @@ int main() {
       if(A > vertices.size()  || A < 0
           || B > vertices.size() || B < 0
           || C > vertices.size() || C < 0){
-        std::cerr << "NOPE " << A  << " " << B << " "  << C << " "  << vertices.size() << std::endl;
+        std::cerr << "NOPE vertices " << A  << " " << B << " "  << C << " "  << vertices.size() << std::endl;
         std::cerr << str << std::endl;
         exit(1);
       }
 
-      world->add( new Triangle(vertices[A],
-                               vertices[B],
-                               vertices[C],
-                               objMat) );
+      unsigned long NA, NB, NC;
+      NA = na > 0 ? na-1 : normals.size()+na;
+      NB = nb > 0 ? nb-1 : normals.size()+nb;
+      NC = nc > 0 ? nc-1 : normals.size()+nc;
+
+      if(NA > normals.size()  || NA < 0
+          || NB > normals.size() || NB < 0
+          || NC > normals.size() || NC < 0){
+        std::cerr << "NOPE normals " << NA  << " " << NB << " "  << NC << " "  << normals.size() << std::endl;
+        std::cerr << str << std::endl;
+        exit(1);
+      }
+
+      world->add( new SmoothedTriangle(vertices[A],
+                                       vertices[B],
+                                       vertices[C],
+                                       normals[NA],
+                                       normals[NB],
+                                       normals[NC],
+                                       objMat) );
     }
   }
 
+
+
+  // debug cube
+  /* world = new ObjectGroup(); */
+  /* world->extend( box(new Metal(new ConstantTexture(0.8, 0.8, 0.8), 0.f))->list ); */
 
 
   // convert world to a BHV
@@ -287,6 +319,8 @@ int main() {
   /* std::cout << bhv_world->bounding_box()->str() << std::endl; */
   /* std::cout << bhv_world->left->bounding_box()->str() << std::endl; */
   /* std::cout << bhv_world->right->bounding_box()->str() << std::endl; */
+
+
 
 
   auto bhvTime = std::chrono::high_resolution_clock::now();

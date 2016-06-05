@@ -359,6 +359,10 @@ class Triangle: public Object {
       );
     }
 
+    virtual Vector normal(float u, float v){
+      return norm;
+    }
+
     HitRecord *hit(Ray ray, float t_min, float t_max) {
       nTriangleIntersection++;
 
@@ -384,7 +388,7 @@ class Triangle: public Object {
         return new HitRecord(
             t,
             ray.point_at_parameter(t),
-            norm,
+            normal(u, v),
             material,
             u,
             v
@@ -402,6 +406,26 @@ class Triangle: public Object {
 };
 
 #endif  // NO_MOLLER_TRUMBORE
+
+class SmoothedTriangle : public Triangle {
+  public:
+    Vector na, nb, nc;
+
+    SmoothedTriangle(Vector a, Vector b, Vector c, Vector na, Vector nb, Vector nc, Material *material) : Triangle(a, b, c, material), na(na), nb(nb), nc(nc) {
+      e1 = b - a;
+      e2 = c - a;
+    }
+
+    Vector normal(float u, float v){
+      // Ray Tracing from the Ground Up p.479
+      // u <=> beta, v <=> gamma
+      return (
+          (1-u-v) * na
+          +  u    * nb
+          +  v    * nc
+        ).unit();
+    }
+};
 
 
 class BHV : public Object {
@@ -495,7 +519,7 @@ class BHV : public Object {
 
 // 'Fake primitive' - alternative constructors
 
-inline ObjectGroup* box(Material *mat, Vector orig,
+inline ObjectGroup* box(Material *mat, Vector orig=Vector(-0.5f, 0.5f, -0.5f),
                         Vector size=VECTOR_ONE,
                         Vector rotation=VECTOR_ZERO  // in deg
                         ) {
@@ -535,6 +559,18 @@ inline ObjectGroup* box(Material *mat, Vector orig,
   Vector F = B - Y;
   Vector G = C - Y;
   Vector H = D - Y;
+
+
+  /* // norml debbuging */
+  /* Vector center = A + (G-A)/2; */
+  /* Vector NA = (A - center).unit(); */
+  /* Vector NB = (B - center).unit(); */
+  /* Vector NC = (C - center).unit(); */
+  /* Vector ND = (D - center).unit(); */
+  /* Vector NE = (E - center).unit(); */
+  /* Vector NF = (F - center).unit(); */
+  /* Vector NG = (G - center).unit(); */
+  /* Vector NH = (H - center).unit(); */
 
 
   // walls
