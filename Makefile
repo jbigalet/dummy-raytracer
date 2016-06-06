@@ -1,4 +1,4 @@
-CXX=g++
+CXX=clang++
 CXXFLAGS=-g -std=c++11 -lpthread -Wall -Ofast -march=native -flto
 # CXXFLAGS=-g -std=c++11 -lpthread -Wall -O2
 # CXXFLAGS=-g -std=c++11 -lpthread -Wall -O3

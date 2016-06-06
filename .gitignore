@@ -2,3 +2,9 @@ bin/*
 .depend
 *.o
 *.ppm
+__pycache__/*
+*.obj
+*.mtl
+*.bmp
+*.png
+Session.vim

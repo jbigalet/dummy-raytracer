@@ -281,9 +281,9 @@ int main() {
       B = b > 0 ? b-1 : vertices.size()+b;
       C = c > 0 ? c-1 : vertices.size()+c;
 
-      if(A > vertices.size()  || A < 0
-          || B > vertices.size() || B < 0
-          || C > vertices.size() || C < 0){
+      if(A > vertices.size()
+          || B > vertices.size()
+          || C > vertices.size()){
         std::cerr << "NOPE vertices " << A  << " " << B << " "  << C << " "  << vertices.size() << std::endl;
         std::cerr << str << std::endl;
         exit(1);
@@ -295,9 +295,9 @@ int main() {
         NB = nb > 0 ? nb-1 : normals.size()+nb;
         NC = nc > 0 ? nc-1 : normals.size()+nc;
 
-        if(NA > normals.size()  || NA < 0
-            || NB > normals.size() || NB < 0
-            || NC > normals.size() || NC < 0){
+        if(NA > normals.size()
+            || NB > normals.size()
+            || NC > normals.size()){
           std::cerr << "NOPE normals " << NA  << " " << NB << " "  << NC << " "  << normals.size() << std::endl;
           std::cerr << str << std::endl;
           exit(1);
@@ -391,7 +391,7 @@ int main() {
 
 
   long totalDirectRay = width*height*(nsamples-nsamples%4);
-  int perc;
+  int perc = 0;
   long lastTotalRay = 0;
   while(perc != 100) {
     perc = (nDirectRay*100)/totalDirectRay;
