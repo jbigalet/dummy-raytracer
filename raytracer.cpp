@@ -36,14 +36,14 @@ int main() {
   /* int height = 1080/8; */
 
   /* int width = 1920/4; */
-  /* int height = 1080/4; */
+  int height = 1080/4;
   /* int height = 50; */
 
   /* int width = 1920/2; */
   /* int height = 1080/2; */
 
   /* int width = 1920; */
-  int height = 1080;
+  /* int height = 1080; */
 
   /* int width = 1200; */
   /* int height = 600; */
@@ -53,9 +53,9 @@ int main() {
 
   int width = height;
 
-  int nsamples = 4;
+  /* int nsamples = 4; */
   /* int nsamples = 20; */
-  /* int nsamples = 50; */
+  int nsamples = 50;
   /* int nsamples = 100; */
   /* int nsamples = 200; */
   /* int nsamples = 500; */
@@ -331,7 +331,7 @@ int main() {
   }
 
   // smooth triangles we dont have the normal for
-  for(int ivertice=0 ; ivertice<vertices.size() ; ivertice++){
+  for(unsigned int ivertice=0 ; ivertice<vertices.size() ; ivertice++){
     Vector vertice = vertices[ivertice];
     Vector norm = faces[ivertice]/nfaces[ivertice];
     for(SmoothedTriangle* triangle: tosmooth){
@@ -348,7 +348,7 @@ int main() {
     obj->add(triangle);
 
 
-  world = new ObjectGroup();
+  /* world = new ObjectGroup(); */
   world->extend(obj->list);
 
 
@@ -390,7 +390,7 @@ int main() {
   }
 
 
-  long totalDirectRay = width*height*nsamples;
+  long totalDirectRay = width*height*(nsamples-nsamples%4);
   int perc;
   long lastTotalRay = 0;
   while(perc != 100) {

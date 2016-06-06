@@ -369,8 +369,8 @@ class Triangle: public Object {
       Vector P = ray.dir*e2;
       float det = e1%P;
 
-      if (det < 0.0001f) return NULL;
-      /* if (fabs(det) < kEpsilon) return NULL; */
+      if (det < 0.00000000001f) return NULL;
+      /* if (fabs(det) < 0.0000000001f) return NULL; */
 
       det = 1 / det;
 
