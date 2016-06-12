@@ -6,6 +6,9 @@
 
 #include "stats.h"
 #include "utils.h"
+#include "vector.h"
+#include "ray.h"
+#include "object.h"
 
 class Camera {
   public:

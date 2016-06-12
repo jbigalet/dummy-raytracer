@@ -8,11 +8,12 @@
 
 #include "vector.h"
 #include "stats.h"
+#include "ray.h"
 
-class Ray;
 class Material;
 
 struct HitRecord {
+  HitRecord() {}
   HitRecord(float t, Vector p, Vector normal, Material *material, float u, float v)
            : t(t), p(p), normal(normal), material(material), u(u), v(v) {};
 
@@ -35,7 +36,7 @@ class Object {
   public:
     ~Object() {}
 
-    virtual HitRecord* hit(Ray ray, float t_min, float t_max) = 0;
+    virtual bool hit(Ray ray, float t_min, float t_max, HitRecord &res) = 0;
     virtual AABB* bounding_box() = 0;
 
     virtual inline std::string str(std::string indent="") {
@@ -78,7 +79,7 @@ class AABB : public Object {
       return this;
     }
 
-    HitRecord *hit(Ray ray, float t_min, float t_max) {
+    bool hit(Ray ray, float t_min, float t_max, HitRecord &res) {
       for(int i=0 ; i<3 ; i++){
         float t0 = (vmin[i] - ray.orig[i])/ray.dir[i];
         float t1 = (vmax[i] - ray.orig[i])/ray.dir[i];
@@ -87,19 +88,10 @@ class AABB : public Object {
         t_min = t0 > t_min ? t0 : t_min;
         t_max = t1 < t_max ? t1 : t_max;
         if(t_max <= t_min - 0.001f)  // epsilon to avoid some floating point rounding stuff 'hiding' some axis aligned triangles
-          return NULL;
+          return false;
       }
 
-      // we dont care about lots of stuff since we'll only be using this in our BHV
-      // TODO replace this with a dummy constant, or boolean returning function
-      return new HitRecord(
-          0.0f,
-          VECTOR_ZERO,
-          VECTOR_ZERO,
-          NULL,
-          0.0f,
-          0.0f
-      );
+      return true;
     }
 
     inline std::string str(std::string indent="") {
@@ -130,16 +122,11 @@ class ObjectGroup : public Object {
       list.insert(list.end(), toappend.begin(), toappend.end());
     }
 
-    HitRecord *hit(Ray ray, float t_min, float t_max) {
-      HitRecord *bestHit = NULL;
-      for(Object* obj : list){
-        HitRecord* hit = obj->hit(ray, t_min, bestHit == NULL ? t_max : bestHit->t);
-        if(hit != NULL){
-          delete bestHit;
-          bestHit = hit;
-        }
-      }
-      return bestHit;
+    bool hit(Ray ray, float t_min, float t_max, HitRecord &res) {
+      bool bres = false;
+      for(Object* obj : list)
+        bres = obj->hit(ray, t_min, bres ? res.t : t_max, res) || bres;
+      return bres;
     }
 
     AABB* bounding_box(){
@@ -170,7 +157,7 @@ class Sphere : public Object {
       );
     }
 
-    HitRecord *hit(Ray ray, float t_min, float t_max) {
+    bool hit(Ray ray, float t_min, float t_max, HitRecord &res) {
       Vector oc = ray.orig - center;
       float a = ray.dir%ray.dir;
       float b = 2.0f * oc%ray.dir;
@@ -192,7 +179,7 @@ class Sphere : public Object {
           goto returnHitRec;
       }
 
-      return NULL;
+      return false;
 
 
     returnHitRec:
@@ -211,14 +198,13 @@ class Sphere : public Object {
       float u = 1.f-(phi + M_PI)/(2*M_PI);
       float v = (theta + M_PI/2.f)/(M_PI);
 
-      return new HitRecord(
-          tmp,
-          hitpoint,
-          norm,
-          material,
-          u,
-          v
-      );
+      res.t = tmp;
+      res.p = hitpoint;
+      res.normal = norm;
+      res.material = material;
+      res.u = u;
+      res.v = v;
+      return true;
     }
 
     inline std::string str(std::string indent="") {
@@ -240,23 +226,23 @@ class Plane: public Object {
       return NULL;  // we could have an infinte bounding box. well..
     }
 
-    HitRecord *hit(Ray ray, float t_min, float t_max) {
+    bool hit(Ray ray, float t_min, float t_max, HitRecord &res) {
       float ND = norm%ray.dir;
       if(abs(ND) < 0.00001f) // assume its parallel
-        return NULL;
+        return false;
 
       float t = (norm%(point-ray.orig))/ND;
-      if(t > t_min && t < t_max)
-        return new HitRecord(
-          t,
-          ray.point_at_parameter(t),
-          norm,
-          material,
-          0.f,  // u
-          0.f   // v
-        );
+      if(t > t_min && t < t_max){
+        res.t = t;
+        res.p = ray.point_at_parameter(t);
+        res.normal = norm;
+        res.material = material;
+        res.u = 0.0f;
+        res.v = 0.0f;
+        return true;
+      }
 
-      return NULL;
+      return false;
     }
 
     inline std::string str(std::string indent="") {
@@ -293,13 +279,13 @@ class Triangle: public Object {
       );
     }
 
-    HitRecord *hit(Ray ray, float t_min, float t_max) {
+    bool hit(Ray ray, float t_min, float t_max, HitRecord &res) {
       nTriangleIntersection++;
 
       float ND = norm%ray.dir;
 
       if(ND > -0.0001f)   // TODO change that if we want dielectric triangles
-        return NULL;
+        return false;
 
       /* if(abs(ND) < 0.00001f) // assume its parallel */
       /*   return NULL; */
@@ -314,17 +300,16 @@ class Triangle: public Object {
         if(norm%(A*(hitpoint-b)) < 0) return NULL;
         if(norm%(B*(hitpoint-c)) < 0) return NULL;
 
-        return new HitRecord(
-            t,
-            hitpoint,
-            norm,
-            material,
-            0.f,  // u
-            0.f   // v
-            );
+        res.t = t;
+        res.p = hitpoint;
+        res.normal = norm;
+        res.material = material;
+        res.u = 0.0f;
+        res.v = 0.0f;
+        return true;
       }
 
-      return NULL;
+      return false;
     }
 
     inline std::string str(std::string indent="") {
@@ -363,38 +348,38 @@ class Triangle: public Object {
       return norm;
     }
 
-    HitRecord *hit(Ray ray, float t_min, float t_max) {
+    bool hit(Ray ray, float t_min, float t_max, HitRecord &res) {
       nTriangleIntersection++;
 
       Vector P = ray.dir*e2;
       float det = e1%P;
 
-      if (det < 0.00000000001f) return NULL;
-      /* if (fabs(det) < 0.0000000001f) return NULL; */
+      if (det < 0.00000000001f) return false;
+      /* if (fabs(det) < 0.0000000001f) return false; */
 
       det = 1 / det;
 
       Vector T = ray.orig - a;
       float u = (T%P) * det;
-      if (u < 0 || u > 1) return NULL;
+      if (u < 0 || u > 1) return false;
 
       Vector Q = T*e1;
       float v = (ray.dir%Q) * det;
-      if (v < 0 || u + v > 1) return NULL;
+      if (v < 0 || u + v > 1) return false;
 
       float t = (e2%Q) * det;
 
-      if(t > t_min && t < t_max)
-        return new HitRecord(
-            t,
-            ray.point_at_parameter(t),
-            normal(u, v),
-            material,
-            u,
-            v
-            );
+      if(t > t_min && t < t_max){
+        res.t = t;
+        res.p = ray.point_at_parameter(t);
+        res.normal = normal(u, v);
+        res.material = material;
+        res.u = u;
+        res.v = v;
+        return true;
+      }
 
-      return NULL;
+      return false;
     }
 
     inline std::string str(std::string indent="") {
@@ -475,36 +460,21 @@ class BHV : public Object {
       return &box;
     }
 
-    HitRecord *hit(Ray ray, float t_min, float t_max) {
+    bool hit(Ray ray, float t_min, float t_max, HitRecord &res) {
       nBoxIntersection++;
 
-      HitRecord* dummyRec = box.hit(ray, t_min, t_max); // TODO change by a bool returning function
-      if(dummyRec != NULL){
-        delete dummyRec;
-
+      if(box.hit(ray, t_min, t_max, res)){
         /* std::cout << "hit " << box.str() << " with " << ray.orig << " - dir " << ray.dir << std::endl; */
 
-        HitRecord* rec_left = left->hit(ray, t_min, t_max);
-        HitRecord* rec_right = right->hit(ray, t_min, t_max);
-
-        if(rec_left != NULL){
-          if(rec_right != NULL){
-            if(rec_left->t < rec_right->t){
-              delete rec_right;
-              return rec_left;
-            } else {
-              delete rec_left;
-              return rec_right;
-            }
-          }
-          return rec_left;
+        if(left->hit(ray, t_min, t_max, res)){
+          right->hit(ray, t_min, res.t, res);  // will replace res if it hits before
+          return true;
         }
 
-        if(rec_right != NULL)
-          return rec_right;
+        return right->hit(ray, t_min, t_max, res);
       }
 
-      return NULL;
+      return false;
     }
 
     inline std::string str(std::string indent="") {
