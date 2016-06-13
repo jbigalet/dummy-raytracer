@@ -52,24 +52,28 @@ class Object {
 // axis aligned bounding box
 class AABB : public Object {
   public:
-    Vector vmin;
-    Vector vmax;
+    /* Vector bounds[0]; */
+    /* Vector bounds[1]; */
+    Vector bounds[2];
 
     AABB() {};
-    AABB(Vector vmin, Vector vmax) : vmin(vmin), vmax(vmax) {}
+    AABB(Vector vmin, Vector vmax) {
+      bounds[0] = vmin;
+      bounds[1] = vmax;
+    }
 
     inline AABB operator&(const AABB &box) {
       return AABB(
           Vector(
-            fmin(vmin.x, box.vmin.x),
-            fmin(vmin.y, box.vmin.y),
-            fmin(vmin.z, box.vmin.z)
+            fmin(bounds[0].x, box.bounds[0].x),
+            fmin(bounds[0].y, box.bounds[0].y),
+            fmin(bounds[0].z, box.bounds[0].z)
             ),
 
           Vector(
-            fmax(vmax.x, box.vmax.x),
-            fmax(vmax.y, box.vmax.y),
-            fmax(vmax.z, box.vmax.z)
+            fmax(bounds[1].x, box.bounds[1].x),
+            fmax(bounds[1].y, box.bounds[1].y),
+            fmax(bounds[1].z, box.bounds[1].z)
             )
           );
     }
@@ -80,40 +84,94 @@ class AABB : public Object {
     }
 
     bool hit(Ray ray, float t_min, float t_max, HitRecord &res) {
-      for(int i=0 ; i<3 ; i++){
-        float t0 = (vmin[i] - ray.orig[i])*ray.invdir[i];
-        float t1 = (vmax[i] - ray.orig[i])*ray.invdir[i];
-        if(ray.dir[i] < 0.f)
-          std::swap(t0, t1);
-        t_min = t0 > t_min ? t0 : t_min;
-        t_max = t1 < t_max ? t1 : t_max;
-        if(t_max <= t_min - 0.001f)  // epsilon to avoid some floating point rounding stuff 'hiding' some axis aligned triangles
-          return false;
-      }
+      /* for(int i=0 ; i<3 ; i++){ */
+      /*   float t0 = (bounds[0][i] - ray.orig[i])*ray.invdir[i]; */
+      /*   float t1 = (bounds[1][i] - ray.orig[i])*ray.invdir[i]; */
+      /*   if(ray.dir[i] < 0.f) */
+      /*     std::swap(t0, t1); */
+      /*   t_min = t0 > t_min ? t0 : t_min; */
+      /*   t_max = t1 < t_max ? t1 : t_max; */
+      /*   if(t_max <= t_min - 0.001f)  // epsilon to avoid some floating point rounding stuff 'hiding' some axis aligned triangles */
+      /*     return false; */
+      /* } */
 
-      return true;
+      /* return true; */
+
+      // http://www.cs.utah.edu/~awilliam/box/box.pdf
+      float t1min = (bounds[ray.sign[0]].x - ray.orig.x) * ray.invdir.x;
+      float t1max = (bounds[1-ray.sign[0]].x - ray.orig.x) * ray.invdir.x;
+      float t2min = (bounds[ray.sign[1]].y - ray.orig.y) * ray.invdir.y;
+      float t2max = (bounds[1-ray.sign[1]].y - ray.orig.y) * ray.invdir.y;
+
+      if(t1min > t2max || t2min > t1max)
+        return false;
+
+      if (t2min > t1min)
+        t1min = t2min;
+      if (t2max < t1max)
+        t1max = t2max;
+
+      t2min = (bounds[ray.sign[2]].z - ray.orig.z) * ray.invdir.z;
+      t2max = (bounds[1-ray.sign[2]].z - ray.orig.z) * ray.invdir.z;
+
+      if(t1min > t2max || t2min > t1max)
+        return false;
+
+      if (t2min > t1min)
+        t1min = t2min;
+      if (t2max < t1max)
+        t1max = t2max;
+
+      return (t1min < t_max && t1max > t_min);
     }
 
     // easier to exec callgrind & such with another function without an hitrecord output
     bool hit(Ray ray, float t_min, float t_max) {
-      for(int i=0 ; i<3 ; i++){
-        float t0 = (vmin[i] - ray.orig[i])*ray.invdir[i];
-        float t1 = (vmax[i] - ray.orig[i])*ray.invdir[i];
-        if(ray.dir[i] < 0.f)
-          std::swap(t0, t1);
-        t_min = t0 > t_min ? t0 : t_min;
-        t_max = t1 < t_max ? t1 : t_max;
-        if(t_max <= t_min - 0.001f)  // epsilon to avoid some floating point rounding stuff 'hiding' some axis aligned triangles
-          return false;
-      }
+      /* for(int i=0 ; i<3 ; i++){ */
+      /*   float t0 = (bounds[0][i] - ray.orig[i])*ray.invdir[i]; */
+      /*   float t1 = (bounds[1][i] - ray.orig[i])*ray.invdir[i]; */
+      /*   if(ray.dir[i] < 0.f) */
+      /*     std::swap(t0, t1); */
+      /*   t_min = t0 > t_min ? t0 : t_min; */
+      /*   t_max = t1 < t_max ? t1 : t_max; */
+      /*   if(t_max <= t_min - 0.001f)  // epsilon to avoid some floating point rounding stuff 'hiding' some axis aligned triangles */
+      /*     return false; */
+      /* } */
 
-      return true;
+      /* return true; */
+
+      // http://www.cs.utah.edu/~awilliam/box/box.pdf
+      float t1min = (bounds[ray.sign[0]].x - ray.orig.x) * ray.invdir.x;
+      float t1max = (bounds[1-ray.sign[0]].x - ray.orig.x) * ray.invdir.x;
+      float t2min = (bounds[ray.sign[1]].y - ray.orig.y) * ray.invdir.y;
+      float t2max = (bounds[1-ray.sign[1]].y - ray.orig.y) * ray.invdir.y;
+
+      if(t1min > t2max || t2min > t1max)
+        return false;
+
+      if (t2min > t1min)
+        t1min = t2min;
+      if (t2max < t1max)
+        t1max = t2max;
+
+      t2min = (bounds[ray.sign[2]].z - ray.orig.z) * ray.invdir.z;
+      t2max = (bounds[1-ray.sign[2]].z - ray.orig.z) * ray.invdir.z;
+
+      if(t1min > t2max || t2min > t1max)
+        return false;
+
+      if (t2min > t1min)
+        t1min = t2min;
+      if (t2max < t1max)
+        t1max = t2max;
+
+      return (t1min < t_max && t1max > t_min);
     }
 
     inline std::string str(std::string indent="") {
       return indent + "AABB:\n"
-              + indent + "  min: " + vmin.str()
-              + indent + "  max: " + vmax.str();
+              + indent + "  min: " + bounds[0].str()
+              + indent + "  max: " + bounds[1].str();
     }
 };
 
@@ -459,7 +517,7 @@ class BHV : public Object {
         /* int axis = int(3*RANDOM_FLOAT); */
         /* int axis = 2; */
         std::sort(list.begin(), list.end(), [axis] (Object* a, Object* b) {
-          return (*(b->bounding_box())).vmin[axis] < (*(a->bounding_box())).vmin[axis];
+          return (*(b->bounding_box())).bounds[0][axis] < (*(a->bounding_box())).bounds[0][axis];
         });
 
         if(size == 3)

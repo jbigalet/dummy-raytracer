@@ -24,7 +24,9 @@ void rt_pass(Camera camera, Object* world, int width, int height, int max_bounce
 int main() {
   auto startTime = std::chrono::high_resolution_clock::now();
 
-  int nthreads = 4;
+  int nthreads = 1;
+  /* int nthreads = 2; */
+  /* int nthreads = 4; */
 
   /* int width = 400; */
   /* int height = 200; */
@@ -53,6 +55,7 @@ int main() {
 
   int width = height;
 
+  /* int nsamples = 1; */
   /* int nsamples = 4; */
   int nsamples = 20;
   /* int nsamples = 50; */
@@ -390,15 +393,15 @@ int main() {
   }
 
 
-  long totalDirectRay = width*height*(nsamples-nsamples%4);
-  int perc = 0;
-  long lastTotalRay = 0;
-  while(perc != 100) {
-    perc = (nDirectRay*100)/totalDirectRay;
-    std::cout << "\r" << perc << " %" << "  -- " << (nTotalRay-lastTotalRay)/1000.f << "K ray per sec" << std::flush;
-    lastTotalRay = nTotalRay;
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-  }
+  /* long totalDirectRay = width*height*(nsamples-nsamples%nthreads); */
+  /* int perc = 0; */
+  /* long lastTotalRay = 0; */
+  /* while(perc != 100) { */
+  /*   perc = (nDirectRay*100)/totalDirectRay; */
+  /*   std::cout << "\r" << perc << " %" << "  -- " << (nTotalRay-lastTotalRay)/1000.f << "K ray per sec" << std::flush; */
+  /*   lastTotalRay = nTotalRay; */
+  /*   std::this_thread::sleep_for(std::chrono::milliseconds(10)); */
+  /* } */
 
 
   // join threads - just in case
