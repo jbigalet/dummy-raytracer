@@ -23,11 +23,11 @@ class Vector {
     Vector(float a, float b, float c): x(a), y(b), z(c) {}
 
     // clone constructor
-    Vector(const Vector &v) {
-      x = v.x;
-      y = v.y;
-      z = v.z;
-    }
+    /* Vector(const Vector &v) { */
+    /*   x = v.x; */
+    /*   y = v.y; */
+    /*   z = v.z; */
+    /* } */
 
     ~Vector() {};
 

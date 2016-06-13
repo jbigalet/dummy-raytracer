@@ -81,8 +81,24 @@ class AABB : public Object {
 
     bool hit(Ray ray, float t_min, float t_max, HitRecord &res) {
       for(int i=0 ; i<3 ; i++){
-        float t0 = (vmin[i] - ray.orig[i])/ray.dir[i];
-        float t1 = (vmax[i] - ray.orig[i])/ray.dir[i];
+        float t0 = (vmin[i] - ray.orig[i])*ray.invdir[i];
+        float t1 = (vmax[i] - ray.orig[i])*ray.invdir[i];
+        if(ray.dir[i] < 0.f)
+          std::swap(t0, t1);
+        t_min = t0 > t_min ? t0 : t_min;
+        t_max = t1 < t_max ? t1 : t_max;
+        if(t_max <= t_min - 0.001f)  // epsilon to avoid some floating point rounding stuff 'hiding' some axis aligned triangles
+          return false;
+      }
+
+      return true;
+    }
+
+    // easier to exec callgrind & such with another function without an hitrecord output
+    bool hit(Ray ray, float t_min, float t_max) {
+      for(int i=0 ; i<3 ; i++){
+        float t0 = (vmin[i] - ray.orig[i])*ray.invdir[i];
+        float t1 = (vmax[i] - ray.orig[i])*ray.invdir[i];
         if(ray.dir[i] < 0.f)
           std::swap(t0, t1);
         t_min = t0 > t_min ? t0 : t_min;
@@ -463,7 +479,7 @@ class BHV : public Object {
     bool hit(Ray ray, float t_min, float t_max, HitRecord &res) {
       nBoxIntersection++;
 
-      if(box.hit(ray, t_min, t_max, res)){
+      if(box.hit(ray, t_min, t_max)){
         /* std::cout << "hit " << box.str() << " with " << ray.orig << " - dir " << ray.dir << std::endl; */
 
         if(left->hit(ray, t_min, t_max, res)){

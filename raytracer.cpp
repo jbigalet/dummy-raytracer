@@ -54,8 +54,8 @@ int main() {
   int width = height;
 
   /* int nsamples = 4; */
-  /* int nsamples = 20; */
-  int nsamples = 50;
+  int nsamples = 20;
+  /* int nsamples = 50; */
   /* int nsamples = 100; */
   /* int nsamples = 200; */
   /* int nsamples = 500; */
