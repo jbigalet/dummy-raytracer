@@ -52,28 +52,24 @@ class Object {
 // axis aligned bounding box
 class AABB : public Object {
   public:
-    /* Vector bounds[0]; */
-    /* Vector bounds[1]; */
-    Vector bounds[2];
+    Vector vmin;
+    Vector vmax;
 
     AABB() {};
-    AABB(Vector vmin, Vector vmax) {
-      bounds[0] = vmin;
-      bounds[1] = vmax;
-    }
+    AABB(Vector vmin, Vector vmax): vmin(vmin), vmax(vmax) {}
 
     inline AABB operator&(const AABB &box) {
       return AABB(
           Vector(
-            fmin(bounds[0].x, box.bounds[0].x),
-            fmin(bounds[0].y, box.bounds[0].y),
-            fmin(bounds[0].z, box.bounds[0].z)
+            fmin(vmin.x, box.vmin.x),
+            fmin(vmin.y, box.vmin.y),
+            fmin(vmin.z, box.vmin.z)
             ),
 
           Vector(
-            fmax(bounds[1].x, box.bounds[1].x),
-            fmax(bounds[1].y, box.bounds[1].y),
-            fmax(bounds[1].z, box.bounds[1].z)
+            fmax(vmax.x, box.vmax.x),
+            fmax(vmax.y, box.vmax.y),
+            fmax(vmax.z, box.vmax.z)
             )
           );
     }
@@ -83,10 +79,18 @@ class AABB : public Object {
       return this;
     }
 
+    inline Vector operator[] (int i) {
+      return (i==0) ? vmin : vmax;
+    }
+
+    inline const Vector operator[] (int i) const {
+      return (i==0) ? vmin : vmax;
+    }
+
     bool hit(Ray ray, float t_min, float t_max, HitRecord &res) {
       /* for(int i=0 ; i<3 ; i++){ */
-      /*   float t0 = (bounds[0][i] - ray.orig[i])*ray.invdir[i]; */
-      /*   float t1 = (bounds[1][i] - ray.orig[i])*ray.invdir[i]; */
+      /*   float t0 = (vmin[i] - ray.orig[i])*ray.invdir[i]; */
+      /*   float t1 = (vmax[i] - ray.orig[i])*ray.invdir[i]; */
       /*   if(ray.dir[i] < 0.f) */
       /*     std::swap(t0, t1); */
       /*   t_min = t0 > t_min ? t0 : t_min; */
@@ -98,6 +102,8 @@ class AABB : public Object {
       /* return true; */
 
       // http://www.cs.utah.edu/~awilliam/box/box.pdf
+      const AABB &bounds = *this;
+
       float t1min = (bounds[ray.sign[0]].x - ray.orig.x) * ray.invdir.x;
       float t1max = (bounds[1-ray.sign[0]].x - ray.orig.x) * ray.invdir.x;
       float t2min = (bounds[ray.sign[1]].y - ray.orig.y) * ray.invdir.y;
@@ -128,8 +134,8 @@ class AABB : public Object {
     // easier to exec callgrind & such with another function without an hitrecord output
     bool hit(Ray ray, float t_min, float t_max) {
       /* for(int i=0 ; i<3 ; i++){ */
-      /*   float t0 = (bounds[0][i] - ray.orig[i])*ray.invdir[i]; */
-      /*   float t1 = (bounds[1][i] - ray.orig[i])*ray.invdir[i]; */
+      /*   float t0 = (vmin[i] - ray.orig[i])*ray.invdir[i]; */
+      /*   float t1 = (vmax[i] - ray.orig[i])*ray.invdir[i]; */
       /*   if(ray.dir[i] < 0.f) */
       /*     std::swap(t0, t1); */
       /*   t_min = t0 > t_min ? t0 : t_min; */
@@ -141,6 +147,8 @@ class AABB : public Object {
       /* return true; */
 
       // http://www.cs.utah.edu/~awilliam/box/box.pdf
+      const AABB &bounds = *this;
+
       float t1min = (bounds[ray.sign[0]].x - ray.orig.x) * ray.invdir.x;
       float t1max = (bounds[1-ray.sign[0]].x - ray.orig.x) * ray.invdir.x;
       float t2min = (bounds[ray.sign[1]].y - ray.orig.y) * ray.invdir.y;
@@ -170,8 +178,8 @@ class AABB : public Object {
 
     inline std::string str(std::string indent="") {
       return indent + "AABB:\n"
-              + indent + "  min: " + bounds[0].str()
-              + indent + "  max: " + bounds[1].str();
+              + indent + "  min: " + vmin.str()
+              + indent + "  max: " + vmax.str();
     }
 };
 
@@ -517,7 +525,7 @@ class BHV : public Object {
         /* int axis = int(3*RANDOM_FLOAT); */
         /* int axis = 2; */
         std::sort(list.begin(), list.end(), [axis] (Object* a, Object* b) {
-          return (*(b->bounding_box())).bounds[0][axis] < (*(a->bounding_box())).bounds[0][axis];
+          return (*(b->bounding_box())).vmin[axis] < (*(a->bounding_box())).vmin[axis];
         });
 
         if(size == 3)
