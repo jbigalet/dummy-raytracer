@@ -54,7 +54,7 @@ class Camera {
 
       color = color/nsamples;
       /* color.normalize_color(); */
-      color.tone_map();
+      /* color.tone_map(); */
 
       return color;
     }

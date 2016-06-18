@@ -56,8 +56,8 @@ int main() {
   int width = height;
 
   /* int nsamples = 1; */
-  /* int nsamples = 4; */
-  int nsamples = 20;
+  int nsamples = 4;
+  /* int nsamples = 20; */
   /* int nsamples = 50; */
   /* int nsamples = 100; */
   /* int nsamples = 200; */
@@ -393,15 +393,26 @@ int main() {
   }
 
 
-  /* long totalDirectRay = width*height*(nsamples-nsamples%nthreads); */
-  /* int perc = 0; */
-  /* long lastTotalRay = 0; */
-  /* while(perc != 100) { */
-  /*   perc = (nDirectRay*100)/totalDirectRay; */
-  /*   std::cout << "\r" << perc << " %" << "  -- " << (nTotalRay-lastTotalRay)/1000.f << "K ray per sec" << std::flush; */
-  /*   lastTotalRay = nTotalRay; */
-  /*   std::this_thread::sleep_for(std::chrono::milliseconds(10)); */
-  /* } */
+  long totalDirectRay = width*height*(nsamples-nsamples%nthreads);
+  int perc = 0;
+  long lastTotalRay = 0;
+  int pauseCount = 0;  // keep track of the pause number: allow to display average rays for the last second - TODO rolling second
+  const int pauseTime = 1; // in ms
+
+  while(perc != 100) {
+
+    perc = (nDirectRay*100)/totalDirectRay;
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(pauseTime));
+
+    pauseCount++;
+    if(pauseCount*pauseTime>=1000){
+      pauseCount = 0;
+      std::cout << "\r" << perc << " %" << "  -- " << (nTotalRay-lastTotalRay)/1000.f << "K ray per sec" << std::flush;
+      lastTotalRay = nTotalRay;
+    }
+
+  }
 
 
   // join threads - just in case
@@ -416,7 +427,7 @@ int main() {
       for(int ithread=0 ; ithread<nthreads ; ithread++)
         average += out[ithread][i][j];
       average = average/nthreads;
-      int *rgb = average.toRGB(2);
+      int *rgb = average.tone_map().toRGB(2);
       image << rgb[0] << " " << rgb[1] << " " << rgb[2] << "\n";
     }
 

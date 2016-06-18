@@ -77,10 +77,12 @@ class Vector {
       if(z > 1.f) z = 1.f;
     }
 
-    inline void tone_map() {
-      x = x/(x+1);
-      y = y/(y+1);
-      z = z/(z+1);
+    inline Vector tone_map() {
+      return Vector(
+          x/(x+1),
+          y/(y+1),
+          z/(z+1)
+      );
     }
 
     inline std::string str(){
