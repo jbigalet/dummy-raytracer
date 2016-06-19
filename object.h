@@ -461,37 +461,19 @@ class SmoothedTriangle : public Triangle {
     }
 };
 
-/* struct BHVShapeInfo { */
-/*   int id; */
-/*   Vector center; */
-/*   AABB box; */
 
-/*   BHVShapeInfo(int id, const AABB &box): id(id), box(box) { */
-/*     center = box.getCenter(); */
-/*   } */
-/* }; */
-
-/* struct _BHVBuildNode {  // temporary struct */
-/*   AABB box; */
-/*   _BHVBuildNode* left; */
-/*   _BHVBuildNode* right; */
-/*   /1* splitAxis, firstPrimOffset, nPrimitives ? *1/ */
-
-/*   _BHVBuildNode(): left(NULL), right(NULL) {}; */
-/* } */
-
-struct BHVNode {  // Linear storage
+struct _BHVBuildNode {  // Linear storage
   AABB box;
-  BHVNode* left;
-  BHVNode* right;
+  _BHVBuildNode* left;
+  _BHVBuildNode* right;
   Object* primitive;
 
   int axis;
 
-  BHVNode(AABB box, BHVNode* left, BHVNode* right, Object* primitive=NULL):
+  _BHVBuildNode(AABB box, _BHVBuildNode* left, _BHVBuildNode* right, Object* primitive=NULL):
     box(box), left(left), right(right), primitive(primitive) {}
 
-  BHVNode(std::vector<Object*> list, int depth=0) {
+  _BHVBuildNode(std::vector<Object*> list, int depth=0) {
     int size = list.size();
 
     primitive = NULL;
@@ -508,8 +490,9 @@ struct BHVNode {  // Linear storage
       box = *primitive->bounding_box();
 
     } else if(size == 2){
-      left = new BHVNode(*list[0]->bounding_box(), NULL, NULL, list[0]);
-      right = new BHVNode(*list[1]->bounding_box(), NULL, NULL, list[1]);
+      axis = 0;  // TODO: currently dont giving any f
+      left = new _BHVBuildNode(*list[0]->bounding_box(), NULL, NULL, list[0]);
+      right = new _BHVBuildNode(*list[1]->bounding_box(), NULL, NULL, list[1]);
 
     } else {
 
@@ -522,25 +505,26 @@ struct BHVNode {  // Linear storage
       });
 
       if(size == 3)
-        left = new BHVNode(*list[0]->bounding_box(), NULL, NULL, list[0]);  // we want to avoid BHV node with only 1 object
+        left = new _BHVBuildNode(*list[0]->bounding_box(), NULL, NULL, list[0]);  // we want to avoid BHV node with only 1 object
       else
-        left = new BHVNode(std::vector<Object*>(list.begin(), list.begin()+size/2), depth+1);
-      right = new BHVNode(std::vector<Object*>(list.begin() + size/2, list.begin() + (2*size+1)/2), depth+1);
+        left = new _BHVBuildNode(std::vector<Object*>(list.begin(), list.begin()+size/2), depth+1);
+      right = new _BHVBuildNode(std::vector<Object*>(list.begin() + size/2, list.begin() + (2*size+1)/2), depth+1);
     }
 
     box = left->box & right->box;  // union of both bounding boxes
   }
 
-  AABB* bounding_box() {
-    return &box;
+  int nodeCount(){
+    return primitive != NULL ? 1 : 1 + left->nodeCount() + right->nodeCount();
   }
+};
 
-  /* union { */
-    /* uint32_t primitiveOffset; */
-    /* uint32_t otherChildOffset; */
-  /* }; */
-  /* uint8_t nPrimitives; */
-  /* uint8_t axis; */
+
+struct BHVNode {
+  AABB box;
+  int rightNodeOffset;
+  Object* primitive;
+  int axis;
 };
 
 /* enum BHVSplitMethod { */
@@ -552,12 +536,46 @@ struct BHVNode {  // Linear storage
 
 class BHV : public Object {  // node
   public:
-    /* BHVNode* nodes; */
+    BHVNode* nodes;
     /* vector<Object*> primitives; */
-    BHVNode* root;
 
     BHV(std::vector<Object*> list) {
-      root = new BHVNode(list);
+      std::cout << "BHV construction: first pass..." << std::endl;
+      _BHVBuildNode* root = new _BHVBuildNode(list);
+
+      std::cout << "BHV construction: packed structure allocation..." << std::endl;
+
+      // pack every nodes
+      // node array allocation
+      int nodeCount = root->nodeCount();
+      nodes = new BHVNode[nodeCount];
+      for(int i=0 ; i<nodeCount ; i++)
+        new (&nodes[i]) BHVNode;
+
+      std::cout << "BHV construction: filling packaged structure... (node count: " << nodeCount << ")" << std::endl;
+      // fill node array
+      int offset = 0;
+      packNodes(root, &offset);
+      std::cout << "BHV construction: done. offset: " << offset << std::endl;
+    }
+
+    int packNodes(_BHVBuildNode* node, int *offset){
+      int currentOffset = *offset;
+      /* std::cout << "current offset: " << currentOffset << std::endl; */
+      (*offset)++;
+
+      BHVNode* compactNode = &nodes[currentOffset];
+      compactNode->box = node->box;
+      compactNode->primitive = node->primitive;
+
+      if(node->primitive == NULL) {  // dfs
+        compactNode->axis = node->axis;
+        /* if(node->axis > 2 || node ->axis < 0) exit(1); */
+        packNodes(node->left, offset);
+        compactNode->rightNodeOffset = packNodes(node->right, offset);
+      }
+
+      return currentOffset;
     }
 
     AABB *bounding_box() {
@@ -566,16 +584,16 @@ class BHV : public Object {  // node
     }
 
     bool hit(const Ray& ray, HitRecord &res) const {
-
       bool hit = false;
 
-      BHVNode* stack[50];
+      int stack[50];  // node position in 'nodes' array
       int stackPos = 0;
-      BHVNode* currentNode = root;
+      int nodeIdx = 0;  // 1st one is the root
 
       while(true) {
         nBoxIntersection++;
 
+        BHVNode* currentNode = &nodes[nodeIdx];
         if(currentNode->box.hit(ray)){
           /* std::cout << "hit " << box.str() << " with " << ray.orig << " - dir " << ray.dir << std::endl; */
 
@@ -586,32 +604,25 @@ class BHV : public Object {  // node
             if(stackPos == 0)
               break;
             stackPos--;
-            currentNode = stack[stackPos];
+            nodeIdx = stack[stackPos];
 
           } else {
             if(!ray.sign[currentNode->axis]) {
-              stack[stackPos] = currentNode->left;
+              stack[stackPos] = nodeIdx+1;
               stackPos++;
-              currentNode = currentNode->right;
+              nodeIdx = currentNode->rightNodeOffset;
             } else {
-              stack[stackPos] = currentNode->right;
+              stack[stackPos] = currentNode->rightNodeOffset;
               stackPos++;
-              currentNode = currentNode->left;
+              nodeIdx++;
             }
           }
-
-          /* if(left->hit(ray, ray.t_min, ray.t_max, res)){ */
-          /*   right->hit(ray, ray.t_min, res.t, res);  // will replace res if it hits before */
-          /*   return true; */
-          /* } */
-
-          /* return right->hit(ray, ray.t_min, ray.t_max, res); */
 
         } else {
           if(stackPos == 0)
             break;
           stackPos--;
-          currentNode = stack[stackPos];
+          nodeIdx = stack[stackPos];
         }
       }
 
