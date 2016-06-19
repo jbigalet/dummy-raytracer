@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <chrono>
 #include <thread>
+#include <assert.h>
 
 #include "stats.h"
 #include "vector.h"
@@ -22,11 +23,15 @@ void rt_pass(Camera camera, Object* world, int width, int height, int max_bounce
 }
 
 int main() {
+
+  assert(sizeof(BHVNode)==32);  // in case we mess it up one day
+
+
   auto startTime = std::chrono::high_resolution_clock::now();
 
-  int nthreads = 1;
+  /* int nthreads = 1; */
   /* int nthreads = 2; */
-  /* int nthreads = 4; */
+  int nthreads = 4;
 
   /* int width = 400; */
   /* int height = 200; */
@@ -57,8 +62,8 @@ int main() {
 
   /* int nsamples = 1; */
   /* int nsamples = 4; */
-  int nsamples = 20;
-  /* int nsamples = 50; */
+  /* int nsamples = 20; */
+  int nsamples = 50;
   /* int nsamples = 100; */
   /* int nsamples = 200; */
   /* int nsamples = 500; */
