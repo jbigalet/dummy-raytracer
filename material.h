@@ -40,11 +40,13 @@ class Metal: public Material {
     ~Metal() {};
 
     Ray *scatter(Ray &r, HitRecord &rec, Vector &attenuation){
-      attenuation = albedo->color_at(rec.u, rec.v);
       Ray *res = new Ray(rec.p, r.dir.unit() | (rec.normal + fuzz*random_point_in_sphere()));
 
-      if( res->dir % rec.normal > 0 )
+      if( res->dir % rec.normal > 0 ){
+        attenuation = albedo->color_at(rec.u, rec.v);
         return res;
+      }
+
       return NULL;
     }
 };
