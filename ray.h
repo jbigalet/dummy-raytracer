@@ -13,10 +13,12 @@ class Ray {
     Vector dir;  // direction
     Vector invdir;  // direction inverse - used in AABB intersection
     int sign[3];  // sign of dir
+    mutable float t_min, t_max;  // ray min & max time
     float refract_v; // refractive indice
 
-    Ray(Vector orig, Vector dir, float refract_v=1.f)
-      : orig(orig), dir(dir), refract_v(refract_v) {
+
+    Ray(Vector orig, Vector dir, float t_min=0.0001f, float t_max=FLT_MAX, float refract_v=1.f)
+      : orig(orig), dir(dir), t_min(t_min), t_max(t_max), refract_v(refract_v) {
         invdir = Vector(1.f/dir.x,
                         1.f/dir.y,
                         1.f/dir.z);

@@ -56,8 +56,8 @@ int main() {
   int width = height;
 
   /* int nsamples = 1; */
-  int nsamples = 4;
-  /* int nsamples = 20; */
+  /* int nsamples = 4; */
+  int nsamples = 20;
   /* int nsamples = 50; */
   /* int nsamples = 100; */
   /* int nsamples = 200; */
@@ -67,6 +67,7 @@ int main() {
   /* int nsamples = 5000; */
   /* int nsamples = 10000; */
 
+  /* int max_bounces = 1; */
   /* int max_bounces = 2; */
   int max_bounces = 5;
   /* int max_bounces = 10; */

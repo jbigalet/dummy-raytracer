@@ -10,18 +10,21 @@ Vector Ray::color(Object &obj, int max_bounce){
     return VECTOR_ZERO;
 
   HitRecord hit;
-  if(obj.hit(*this, 0.0001f, FLT_MAX, hit)){
+  if(obj.hit(*this, hit)){
     // debug: normal map
     /* return 0.5*Vector(hit->normal.x+1, hit->normal.y+1, hit->normal.z+1); */
 
     Vector attenuation;
     Ray *scattered = hit.material->scatter(*this, hit, attenuation);
 
-    if(scattered != NULL && attenuation.length() > 0.01f) {
-    /* if(scattered != NULL) { */
-      Vector res = scattered->color(obj, max_bounce-1) ^ attenuation;
-      delete scattered;
-      return res;
+    if(scattered != NULL) {
+      if(attenuation.length() > 0.01f){
+        Vector res = scattered->color(obj, max_bounce-1) ^ attenuation;
+        delete scattered;
+        return res;
+      } else {
+        delete scattered;
+      }
     } else {
       return attenuation;
     }

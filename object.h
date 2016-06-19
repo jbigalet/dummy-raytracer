@@ -36,7 +36,7 @@ class Object {
   public:
     ~Object() {}
 
-    virtual bool hit(Ray ray, float t_min, float t_max, HitRecord &res) = 0;
+    virtual bool hit(const Ray& ray, HitRecord &res) const = 0;
     virtual AABB* bounding_box() = 0;
 
     virtual inline std::string str(std::string indent="") {
@@ -87,65 +87,16 @@ class AABB : public Object {
       return (i==0) ? vmin : vmax;
     }
 
-    bool hit(Ray ray, float t_min, float t_max, HitRecord &res) {
-      /* for(int i=0 ; i<3 ; i++){ */
-      /*   float t0 = (vmin[i] - ray.orig[i])*ray.invdir[i]; */
-      /*   float t1 = (vmax[i] - ray.orig[i])*ray.invdir[i]; */
-      /*   if(ray.dir[i] < 0.f) */
-      /*     std::swap(t0, t1); */
-      /*   t_min = t0 > t_min ? t0 : t_min; */
-      /*   t_max = t1 < t_max ? t1 : t_max; */
-      /*   if(t_max <= t_min - 0.001f)  // epsilon to avoid some floating point rounding stuff 'hiding' some axis aligned triangles */
-      /*     return false; */
-      /* } */
+    inline const Vector getCenter() const {
+      return (vmin+vmax)/2.f;
+    }
 
-      /* return true; */
-
-      // http://www.cs.utah.edu/~awilliam/box/box.pdf
-      const AABB &bounds = *this;
-
-      float t1min = (bounds[ray.sign[0]].x - ray.orig.x) * ray.invdir.x;
-      float t1max = (bounds[1-ray.sign[0]].x - ray.orig.x) * ray.invdir.x;
-      float t2min = (bounds[ray.sign[1]].y - ray.orig.y) * ray.invdir.y;
-      float t2max = (bounds[1-ray.sign[1]].y - ray.orig.y) * ray.invdir.y;
-
-      if(t1min > t2max || t2min > t1max)
-        return false;
-
-      if (t2min > t1min)
-        t1min = t2min;
-      if (t2max < t1max)
-        t1max = t2max;
-
-      t2min = (bounds[ray.sign[2]].z - ray.orig.z) * ray.invdir.z;
-      t2max = (bounds[1-ray.sign[2]].z - ray.orig.z) * ray.invdir.z;
-
-      if(t1min > t2max || t2min > t1max)
-        return false;
-
-      if (t2min > t1min)
-        t1min = t2min;
-      if (t2max < t1max)
-        t1max = t2max;
-
-      return (t1min < t_max && t1max > t_min);
+    bool hit(const Ray& ray, HitRecord &res) const {
+      return hit(ray);
     }
 
     // easier to exec callgrind & such with another function without an hitrecord output
-    bool hit(Ray ray, float t_min, float t_max) {
-      /* for(int i=0 ; i<3 ; i++){ */
-      /*   float t0 = (vmin[i] - ray.orig[i])*ray.invdir[i]; */
-      /*   float t1 = (vmax[i] - ray.orig[i])*ray.invdir[i]; */
-      /*   if(ray.dir[i] < 0.f) */
-      /*     std::swap(t0, t1); */
-      /*   t_min = t0 > t_min ? t0 : t_min; */
-      /*   t_max = t1 < t_max ? t1 : t_max; */
-      /*   if(t_max <= t_min - 0.001f)  // epsilon to avoid some floating point rounding stuff 'hiding' some axis aligned triangles */
-      /*     return false; */
-      /* } */
-
-      /* return true; */
-
+    bool hit(const Ray& ray) const {
       // http://www.cs.utah.edu/~awilliam/box/box.pdf
       const AABB &bounds = *this;
 
@@ -173,7 +124,7 @@ class AABB : public Object {
       if (t2max < t1max)
         t1max = t2max;
 
-      return (t1min < t_max && t1max > t_min);
+      return (t1min < ray.t_max && t1max > ray.t_min);
     }
 
     inline std::string str(std::string indent="") {
@@ -204,10 +155,13 @@ class ObjectGroup : public Object {
       list.insert(list.end(), toappend.begin(), toappend.end());
     }
 
-    bool hit(Ray ray, float t_min, float t_max, HitRecord &res) {
+    bool hit(const Ray& ray, HitRecord &res) const {
       bool bres = false;
       for(Object* obj : list)
-        bres = obj->hit(ray, t_min, bres ? res.t : t_max, res) || bres;
+        if(obj->hit(ray, res)){
+          bres = true;
+          ray.t_max = res.t;
+        }
       return bres;
     }
 
@@ -239,7 +193,7 @@ class Sphere : public Object {
       );
     }
 
-    bool hit(Ray ray, float t_min, float t_max, HitRecord &res) {
+    bool hit(const Ray& ray, HitRecord &res) const {
       Vector oc = ray.orig - center;
       float a = ray.dir%ray.dir;
       float b = 2.0f * oc%ray.dir;
@@ -252,12 +206,12 @@ class Sphere : public Object {
         float sqrtt = sqrt(discriminant);
         tmp = (-b-sqrtt)/(2.0f*a);
 
-        if(tmp > t_min && tmp < t_max)
+        if(tmp > ray.t_min && tmp < ray.t_max)
           goto returnHitRec;
 
         tmp = (-b+sqrtt)/(2.0f*a);
          /* tmp = -tmp - b/a;  // branch prediction makes this slower? why cant gcc optimize this.. */
-        if(tmp > t_min && tmp < t_max)
+        if(tmp > ray.t_min && tmp < ray.t_max)
           goto returnHitRec;
       }
 
@@ -279,6 +233,8 @@ class Sphere : public Object {
 
       float u = 1.f-(phi + M_PI)/(2*M_PI);
       float v = (theta + M_PI/2.f)/(M_PI);
+
+      ray.t_max = tmp;
 
       res.t = tmp;
       res.p = hitpoint;
@@ -308,13 +264,15 @@ class Plane: public Object {
       return NULL;  // we could have an infinte bounding box. well..
     }
 
-    bool hit(Ray ray, float t_min, float t_max, HitRecord &res) {
+    bool hit(const Ray& ray, HitRecord &res) const {
       float ND = norm%ray.dir;
       if(abs(ND) < 0.00001f) // assume its parallel
         return false;
 
       float t = (norm%(point-ray.orig))/ND;
-      if(t > t_min && t < t_max){
+      if(t > ray.t_min && t < ray.t_max){
+        ray.t_max = t;
+
         res.t = t;
         res.p = ray.point_at_parameter(t);
         res.normal = norm;
@@ -361,7 +319,7 @@ class Triangle: public Object {
       );
     }
 
-    bool hit(Ray ray, float t_min, float t_max, HitRecord &res) {
+    bool hit(const Ray& ray, HitRecord &res) const {
       nTriangleIntersection++;
 
       float ND = norm%ray.dir;
@@ -373,7 +331,7 @@ class Triangle: public Object {
       /*   return NULL; */
 
       float t = (norm%(a-ray.orig))/ND;
-      if(t > t_min && t < t_max) {
+      if(t > ray.t_min && t < ray.t_max) {
         // check if its inside the triangle
         // we check that the point in on the left side of each directed edges
         Vector hitpoint = ray.point_at_parameter(t);
@@ -381,6 +339,8 @@ class Triangle: public Object {
         if(norm%(C*(hitpoint-a)) < 0) return NULL;
         if(norm%(A*(hitpoint-b)) < 0) return NULL;
         if(norm%(B*(hitpoint-c)) < 0) return NULL;
+
+        ray.t_max = t;
 
         res.t = t;
         res.p = hitpoint;
@@ -426,11 +386,11 @@ class Triangle: public Object {
       );
     }
 
-    virtual Vector normal(float u, float v){
+    virtual Vector normal(float u, float v) const {
       return norm;
     }
 
-    bool hit(Ray ray, float t_min, float t_max, HitRecord &res) {
+    bool hit(const Ray& ray, HitRecord &res) const {
       nTriangleIntersection++;
 
       Vector P = ray.dir*e2;
@@ -451,7 +411,9 @@ class Triangle: public Object {
 
       float t = (e2%Q) * det;
 
-      if(t > t_min && t < t_max){
+      if(t > ray.t_min && t < ray.t_max){
+        ray.t_max = t;
+
         res.t = t;
         res.p = ray.point_at_parameter(t);
         res.normal = normal(u, v);
@@ -486,7 +448,7 @@ class SmoothedTriangle : public Triangle {
 
     SmoothedTriangle(Vector a, Vector b, Vector c, Vector na, Vector nb, Vector nc, Material *material) : Triangle(a, b, c, material), na(na), nb(nb), nc(nc) {}
 
-    Vector normal(float u, float v){
+    Vector normal(float u, float v) const {
       // Ray Tracing from the Ground Up p.479
       // u <=> beta, v <=> gamma
 
@@ -499,76 +461,173 @@ class SmoothedTriangle : public Triangle {
     }
 };
 
+/* struct BHVShapeInfo { */
+/*   int id; */
+/*   Vector center; */
+/*   AABB box; */
 
-class BHV : public Object {
-  public:
-    AABB box;
+/*   BHVShapeInfo(int id, const AABB &box): id(id), box(box) { */
+/*     center = box.getCenter(); */
+/*   } */
+/* }; */
 
-    Object* left;
-    Object* right;
+/* struct _BHVBuildNode {  // temporary struct */
+/*   AABB box; */
+/*   _BHVBuildNode* left; */
+/*   _BHVBuildNode* right; */
+/*   /1* splitAxis, firstPrimOffset, nPrimitives ? *1/ */
 
-    BHV(std::vector<Object*> list, int depth=0) {
-      int size = list.size();
+/*   _BHVBuildNode(): left(NULL), right(NULL) {}; */
+/* } */
 
-      if(size < 2){
-        std::cerr << "BHV init: should not have less than 2 objects" << std::endl;
-        exit(1);
-      }
+struct BHVNode {  // Linear storage
+  AABB box;
+  BHVNode* left;
+  BHVNode* right;
+  Object* primitive;
 
-      if(size == 2){
-        left = list[0];
-        right = list[1];
-      } else {
+  int axis;
 
-        // sort around a random axis
-        int axis = depth%3;
-        /* int axis = int(3*RANDOM_FLOAT); */
-        /* int axis = 2; */
-        std::sort(list.begin(), list.end(), [axis] (Object* a, Object* b) {
+  BHVNode(AABB box, BHVNode* left, BHVNode* right, Object* primitive=NULL):
+    box(box), left(left), right(right), primitive(primitive) {}
+
+  BHVNode(std::vector<Object*> list, int depth=0) {
+    int size = list.size();
+
+    primitive = NULL;
+
+    if(size < 1){
+      std::cerr << "BHV init: should not have less than 1 object" << std::endl;
+      exit(1);
+    }
+
+    if(size == 1){
+      left = NULL;
+      right = NULL;
+      primitive = list[0];
+      box = *primitive->bounding_box();
+
+    } else if(size == 2){
+      left = new BHVNode(*list[0]->bounding_box(), NULL, NULL, list[0]);
+      right = new BHVNode(*list[1]->bounding_box(), NULL, NULL, list[1]);
+
+    } else {
+
+      // sort around a random axis
+      axis = depth%3;
+      /* int axis = int(3*RANDOM_FLOAT); */
+      /* int axis = 2; */
+      std::sort(list.begin(), list.end(), [this] (Object* a, Object* b) {
           return (*(b->bounding_box())).vmin[axis] < (*(a->bounding_box())).vmin[axis];
-        });
+      });
 
-        if(size == 3)
-          left = list[0];  // we want to avoid BHV node with only 1 object
-        else
-          left = new BHV(std::vector<Object*>(list.begin(), list.begin()+size/2), depth+1);
-        right = new BHV(std::vector<Object*>(list.begin() + size/2, list.begin() + (2*size+1)/2), depth+1);
-      }
+      if(size == 3)
+        left = new BHVNode(*list[0]->bounding_box(), NULL, NULL, list[0]);  // we want to avoid BHV node with only 1 object
+      else
+        left = new BHVNode(std::vector<Object*>(list.begin(), list.begin()+size/2), depth+1);
+      right = new BHVNode(std::vector<Object*>(list.begin() + size/2, list.begin() + (2*size+1)/2), depth+1);
+    }
 
-      box = (*left->bounding_box()) & (*right->bounding_box());  // union of both bounding boxes
+    box = left->box & right->box;  // union of both bounding boxes
+  }
+
+  AABB* bounding_box() {
+    return &box;
+  }
+
+  /* union { */
+    /* uint32_t primitiveOffset; */
+    /* uint32_t otherChildOffset; */
+  /* }; */
+  /* uint8_t nPrimitives; */
+  /* uint8_t axis; */
+};
+
+/* enum BHVSplitMethod { */
+/*   MIDDLE, */
+/*   EQUAL_COUNT, */
+/*   SAH, */
+/* } */
+
+
+class BHV : public Object {  // node
+  public:
+    /* BHVNode* nodes; */
+    /* vector<Object*> primitives; */
+    BHVNode* root;
+
+    BHV(std::vector<Object*> list) {
+      root = new BHVNode(list);
     }
 
     AABB *bounding_box() {
-      return &box;
+      /* return &box; */
+      return NULL;
     }
 
-    bool hit(Ray ray, float t_min, float t_max, HitRecord &res) {
-      nBoxIntersection++;
+    bool hit(const Ray& ray, HitRecord &res) const {
 
-      if(box.hit(ray, t_min, t_max)){
-        /* std::cout << "hit " << box.str() << " with " << ray.orig << " - dir " << ray.dir << std::endl; */
+      bool hit = false;
 
-        if(left->hit(ray, t_min, t_max, res)){
-          right->hit(ray, t_min, res.t, res);  // will replace res if it hits before
-          return true;
+      BHVNode* stack[50];
+      int stackPos = 0;
+      BHVNode* currentNode = root;
+
+      while(true) {
+        nBoxIntersection++;
+
+        if(currentNode->box.hit(ray)){
+          /* std::cout << "hit " << box.str() << " with " << ray.orig << " - dir " << ray.dir << std::endl; */
+
+          if(currentNode->primitive != NULL) {
+            if(currentNode->primitive->hit(ray, res))
+              hit = true;
+
+            if(stackPos == 0)
+              break;
+            stackPos--;
+            currentNode = stack[stackPos];
+
+          } else {
+            if(!ray.sign[currentNode->axis]) {
+              stack[stackPos] = currentNode->left;
+              stackPos++;
+              currentNode = currentNode->right;
+            } else {
+              stack[stackPos] = currentNode->right;
+              stackPos++;
+              currentNode = currentNode->left;
+            }
+          }
+
+          /* if(left->hit(ray, ray.t_min, ray.t_max, res)){ */
+          /*   right->hit(ray, ray.t_min, res.t, res);  // will replace res if it hits before */
+          /*   return true; */
+          /* } */
+
+          /* return right->hit(ray, ray.t_min, ray.t_max, res); */
+
+        } else {
+          if(stackPos == 0)
+            break;
+          stackPos--;
+          currentNode = stack[stackPos];
         }
-
-        return right->hit(ray, t_min, t_max, res);
       }
 
-      return false;
+      return hit;
     }
 
-    inline std::string str(std::string indent="") {
-      return indent + "BHV[\n" + box.str(indent+"==>")
-             + left->str(indent+"  ") + ",\n"
-             + right->str(indent+"  ") + "\n"
-             + indent + "]\n";
-    }
+    /* inline std::string str(std::string indent="") { */
+    /*   return indent + "BHV[\n" + box.str(indent+"==>") */
+    /*          + left->str(indent+"  ") + ",\n" */
+    /*          + right->str(indent+"  ") + "\n" */
+    /*          + indent + "]\n"; */
+    /* } */
 
-    inline int depth() {
-      return std::max(left->depth(), right->depth()) + 1;
-    }
+    /* inline int depth() { */
+    /*   return std::max(left->depth(), right->depth()) + 1; */
+    /* } */
 };
 
 
