@@ -35,19 +35,19 @@ class Camera {
 
     ~Camera() {};
 
-    Ray getRay(float u, float v){
+    Ray getRay(float u, float v) const {
       return Ray(orig, lower_left_corner + u*hor + v*ver - orig);
     }
 
-    Vector getColor(Object &obj, int x, int y, int max_bounce, int nsamples){
+    Vector getColor(const Object &obj, int x, int y, int max_bounce, int nsamples){
       Vector color = VECTOR_ZERO;
       for(int i=0 ; i<nsamples ; i++){
-        Vector sample = getRay(
-                        (x+RANDOM_FLOAT)/width,
-                        (y+RANDOM_FLOAT)/height
-            ).color(obj, max_bounce);
+        const Ray ray = getRay(
+                               (x+RANDOM_FLOAT)/width,
+                               (y+RANDOM_FLOAT)/height
+                              );
         /* sample.normalize_color(); */
-        color += sample;
+        color += ray.color(obj, max_bounce);;
       }
 
       nDirectRay += nsamples;  // @stats

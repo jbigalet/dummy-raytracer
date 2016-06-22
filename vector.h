@@ -36,7 +36,7 @@ class Vector {
     inline Vector unit() const;
 
     // rotation - by the angles defined in the vector arg
-    inline Vector rotate(const Vector &v) {
+    inline Vector rotate(const Vector &v) const {
 
       // around x
       float cosx = cos(v.x);
@@ -62,7 +62,7 @@ class Vector {
       return Vector(nx, ny, nz);
     }
 
-    inline int* toRGB(float gamma=1.0){
+    inline int* toRGB(float gamma=1.0) const {
       return new int[3] {
         int(255*pow(x, 1.0/gamma)),
         int(255*pow(y, 1.0/gamma)),
@@ -77,7 +77,7 @@ class Vector {
       if(z > 1.f) z = 1.f;
     }
 
-    inline Vector tone_map() {
+    inline Vector tone_map() const {
       return Vector(
           x/(x+1),
           y/(y+1),
@@ -85,7 +85,7 @@ class Vector {
       );
     }
 
-    inline std::string str(){
+    inline std::string str() const {
       return "[" + std::to_string(x) + ", " + std::to_string(y) + ", " + std::to_string(z) + "]";
     }
 
@@ -94,7 +94,7 @@ class Vector {
     inline Vector operator+() const { return *this; }
     inline Vector operator-() const { return Vector(-x, -y, -z); }
 
-    inline float operator[] (int i){
+    inline float operator[] (int i) const {
       if(i==0) return x;
       if(i==1) return y;
       if(i==2) return z;
@@ -104,7 +104,7 @@ class Vector {
       exit(1);
     }
 
-    inline bool operator==(const Vector &v) {
+    inline bool operator==(const Vector &v) const {
       return x == v.x
           && y == v.y
           && z == v.z;

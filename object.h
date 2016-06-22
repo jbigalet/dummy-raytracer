@@ -39,11 +39,11 @@ class Object {
     virtual bool hit(const Ray& ray, HitRecord &res) const = 0;
     virtual AABB* bounding_box() = 0;
 
-    virtual inline std::string str(std::string indent="") {
+    virtual inline std::string str(std::string indent="") const {
       return indent + "<object>";
     }
 
-    virtual inline int depth() {
+    virtual inline int depth() const {
       return 1;
     }
 };
@@ -76,7 +76,7 @@ class AABB {
     }
 
 
-    AABB* bounding_box(){
+    AABB* bounding_box() {
       return this;
     }
 
@@ -128,20 +128,20 @@ class AABB {
       return (t1min < ray.t_max && t1max > ray.t_min);
     }
 
-    inline std::string str(std::string indent="") {
+    inline std::string str(std::string indent="") const {
       return indent + "AABB:\n"
               + indent + "  min: " + vmin.str()
               + indent + "  max: " + vmax.str();
     }
 };
 
-class AABBShape : public AABB, public Object {
-  AABBShape(Vector vmin, Vector vmax): AABB(vmin, vmax) {}
+/* class AABBShape : public AABB, public Object { */
+/*   AABBShape(Vector vmin, Vector vmax): AABB(vmin, vmax) {} */
 
-  AABBShape* bounding_box(){
-    return this;
-  }
-};
+/*   AABBShape* bounding_box() { */
+/*     return this; */
+/*   } */
+/* }; */
 
 
 class ObjectGroup : public Object {
@@ -174,11 +174,11 @@ class ObjectGroup : public Object {
       return bres;
     }
 
-    AABB* bounding_box(){
+    AABB* bounding_box() {
       return NULL;  // TODO? we dont really care atm
     }
 
-    inline std::string str(std::string indent="") {
+    inline std::string str(std::string indent="") const {
       return indent + "ObjectGroup";
     }
 };
@@ -195,7 +195,7 @@ class Sphere : public Object {
     Sphere(Vector center, float radius, Material *material)
       : center(center), radius(radius), material(material) {}
 
-    AABB* bounding_box(){
+    AABB* bounding_box() {
       return new AABB(
           center - Vector(radius, radius, radius),
           center + Vector(radius, radius, radius)
@@ -254,7 +254,7 @@ class Sphere : public Object {
       return true;
     }
 
-    inline std::string str(std::string indent="") {
+    inline std::string str(std::string indent="") const {
       return indent + "Sphere";
     }
 };
@@ -269,7 +269,7 @@ class Plane: public Object {
     Plane(Vector point, Vector norm, Material *material)
       : point(point), norm(norm), material(material) {}
 
-    AABB* bounding_box(){
+    AABB* bounding_box() {
       return NULL;  // we could have an infinte bounding box. well..
     }
 
@@ -294,7 +294,7 @@ class Plane: public Object {
       return false;
     }
 
-    inline std::string str(std::string indent="") {
+    inline std::string str(std::string indent="") const {
       return indent + "Plane";
     }
 };
@@ -321,7 +321,7 @@ class Triangle: public Object {
       norm = -(C*B).unit();
     }
 
-    AABB* bounding_box(){
+    AABB* bounding_box() {
       return new AABB(  // TODO replace min & max function with *args
           min(a, min(b, c)),
           max(a, max(b, c))
@@ -363,7 +363,7 @@ class Triangle: public Object {
       return false;
     }
 
-    inline std::string str(std::string indent="") {
+    inline std::string str(std::string indent="") const {
       return indent + "Triangle";
     }
 };
@@ -435,7 +435,7 @@ class Triangle: public Object {
       return false;
     }
 
-    inline std::string str(std::string indent="") {
+    inline std::string str(std::string indent="") const {
       return indent + "Triangle:\n"
              + indent + "  " + a.str() + ",\n"
              + indent + "  " + b.str() + ",\n"
@@ -661,14 +661,14 @@ class BHV : public Object {  // node
       return hit;
     }
 
-    /* inline std::string str(std::string indent="") { */
+    /* inline std::string str(std::string indent="") const { */
     /*   return indent + "BHV[\n" + box.str(indent+"==>") */
     /*          + left->str(indent+"  ") + ",\n" */
     /*          + right->str(indent+"  ") + "\n" */
     /*          + indent + "]\n"; */
     /* } */
 
-    /* inline int depth() { */
+    /* inline int depth() const { */
     /*   return std::max(left->depth(), right->depth()) + 1; */
     /* } */
 };

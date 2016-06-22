@@ -31,7 +31,7 @@ class Ray {
 
     Vector point_at_parameter(float t) const { return orig + t*dir; }
 
-    Vector color(Object &obj, int max_bounce);
+    Vector color(const Object &obj, int max_bounce) const;
 };
 
 #endif /* DEF_RAY */

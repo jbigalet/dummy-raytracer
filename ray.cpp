@@ -3,7 +3,7 @@
 #include "object.h"
 #include "stats.h"
 
-Vector Ray::color(Object &obj, int max_bounce){
+Vector Ray::color(const Object &obj, int max_bounce) const {
   nTotalRay++;  // @stats
 
   if(max_bounce == 0)

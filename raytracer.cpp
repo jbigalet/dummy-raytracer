@@ -14,11 +14,11 @@
 #include "camera.h"
 #include "texture.h"
 
-void rt_pass(Camera camera, Object* world, int width, int height, int max_bounces, int nsamples, Vector** out) {
+void rt_pass(Camera camera, const Object& world, int width, int height, int max_bounces, int nsamples, Vector** out) {
   for(int i=0 ; i<width ; i++){
     /* std::cout << i << std::endl; */
     for(int j=0 ; j<height ; j++)
-      out[i][j] = camera.getColor(*world, i, j, max_bounces, nsamples);
+      out[i][j] = camera.getColor(world, i, j, max_bounces, nsamples);
   }
 }
 
@@ -368,9 +368,9 @@ int main() {
 
   // convert world to a BHV
   /* BHV* bhv_world = new BHV(&world->list[0], world->list.size()); */
-  BHV* bhv_world = new BHV(world->list);
+  const BHV bhv_world(world->list);
   std::cout << "Triangle count: " << world->list.size() << std::endl;
-  std::cout << "BHV depth: " << bhv_world->depth() << std::endl;
+  std::cout << "BHV depth: " << bhv_world.depth() << std::endl;
 
   /* std::cout << bhv_world->str() << std::endl; */
   /* std::cout << bhv_world->bounding_box()->str() << std::endl; */

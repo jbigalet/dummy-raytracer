@@ -10,7 +10,7 @@
 class Material {
   public:
     ~Material() {}
-    virtual Ray *scatter(Ray &r, HitRecord &rec, Vector &attenuation) = 0;
+    virtual Ray *scatter(const Ray &r, HitRecord &rec, Vector &attenuation) const = 0;
 };
 
 
@@ -24,7 +24,7 @@ class Lambertian : public Material {
     Lambertian(Texture* albedo) : albedo(albedo) {};
     ~Lambertian() {};
 
-    Ray *scatter(Ray &r, HitRecord &rec, Vector &attenuation){
+    Ray *scatter(const Ray &r, HitRecord &rec, Vector &attenuation) const {
       attenuation = albedo->color_at(rec.u, rec.v);
       /* return new Ray(rec.p, rec.normal + random_point_in_sphere()); */
       return new Ray(rec.p, rec.normal + random_point_in_sphere());
@@ -39,7 +39,7 @@ class Metal: public Material {
     Metal(Texture* albedo, float fuzz=0.f) : albedo(albedo), fuzz(fuzz) {};
     ~Metal() {};
 
-    Ray *scatter(Ray &r, HitRecord &rec, Vector &attenuation){
+    Ray *scatter(const Ray &r, HitRecord &rec, Vector &attenuation) const {
       Ray *res = new Ray(rec.p, r.dir.unit() | (rec.normal + fuzz*random_point_in_sphere()));
 
       if( res->dir % rec.normal > 0 ){
@@ -59,7 +59,7 @@ class Dielectric: public Material {
     Dielectric(float rint, float rext=1.f): refract_int(rint), refract_ext(rext) {};
     ~Dielectric() {};
 
-    Ray *scatter(Ray &r, HitRecord &rec, Vector &attenuation){
+    Ray *scatter(const Ray &r, HitRecord &rec, Vector &attenuation) const {
 
       // 2 cases: either we're currently 'inside' this mat, so refraction leaves it
       // or we're outside & refraction goes inside
@@ -100,7 +100,7 @@ class Light : public Material {
     Light(Texture* albedo) : albedo(albedo) {};
     ~Light() {};
 
-    Ray *scatter(Ray &r, HitRecord &rec, Vector &attenuation){
+    Ray *scatter(const Ray &r, HitRecord &rec, Vector &attenuation) const{
       attenuation = albedo->color_at(rec.u, rec.v);
       return NULL;
     }
