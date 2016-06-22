@@ -512,8 +512,35 @@ struct _BHVBuildNode {  // Linear storage
 
     } else {
 
+      float axisMin[3];
+      float axisMax[3];
+      for(int i=0 ; i<3 ; i++){
+        axisMin[i] = FLT_MAX;
+        axisMax[i] = -FLT_MAX;
+      }
+      for(_PrimitiveData* primData : list){
+        AABB* primBB = primData->primitive->bounding_box();
+        for(int i=0 ; i<3 ; i++){
+          if(primBB->vmin[i] < axisMin[i])
+            axisMin[i] = primBB->vmin[i];
+          if(primBB->vmax[i] > axisMin[i])
+            axisMax[i] = primBB->vmax[i];
+        }
+      }
+
+      // sort around largest 'global' bounding box axis
+      axis = 0;
+      float maxAxisDiff = -FLT_MAX;
+      for(int i=0 ; i<3 ; i++){
+        float axisDiff = axisMax[i] - axisMin[i];
+        if(axisDiff > maxAxisDiff){
+          maxAxisDiff = axisDiff;
+          axis = i;
+        }
+      }
+
       // sort around a random axis
-      axis = depth%3;
+      /* axis = depth%3; */
       /* int axis = int(3*RANDOM_FLOAT); */
       /* int axis = 2; */
       std::sort(list.begin(), list.end(), [this] (_PrimitiveData* a, _PrimitiveData* b) {
