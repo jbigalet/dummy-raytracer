@@ -14,11 +14,11 @@
 #include "camera.h"
 #include "texture.h"
 
-void rt_pass(Camera camera, const Object& world, int width, int height, int max_bounces, int nsamples, Vector** out) {
+void rt_pass(Camera camera, const Object& world, int width, int height, int startingWidth, int max_bounces, int nsamples, Vector** out) {
   for(int i=0 ; i<width ; i++){
     /* std::cout << i << std::endl; */
     for(int j=0 ; j<height ; j++)
-      out[i][j] = camera.getColor(world, i, j, max_bounces, nsamples);
+      out[i][j] = camera.getColor(world, i%width, j, max_bounces, nsamples);
   }
 }
 
@@ -394,8 +394,8 @@ int main() {
     for(int i=0 ; i<width ; i++)
       out[ithread][i] = new Vector[height];
 
-    threads[ithread] = std::thread(rt_pass, camera, bhv_world, width, height, max_bounces, nsamples/nthreads, out[ithread]);
-    /* threads[ithread] = std::thread(rt_pass, camera, world, width, height, max_bounces, nsamples/nthreads, out[ithread]); */
+    threads[ithread] = std::thread(rt_pass, camera, bhv_world, width, height, (ithread*width)/nthreads, max_bounces, nsamples/nthreads, out[ithread]);
+    /* threads[ithread] = std::thread(rt_pass, camera, bhv_world, width, height, 0, max_bounces, nsamples/nthreads, out[ithread]); */
   }
 
 
