@@ -29,9 +29,9 @@ int main() {
 
   auto startTime = std::chrono::high_resolution_clock::now();
 
-  /* int nthreads = 1; */
+  int nthreads = 1;
   /* int nthreads = 2; */
-  int nthreads = 4;
+  /* int nthreads = 4; */
 
   /* int width = 400; */
   /* int height = 200; */

@@ -474,7 +474,13 @@ class SmoothedTriangle : public Triangle {
 struct _PrimitiveData {
   Object* primitive;
   int id;
-  _PrimitiveData(Object* primitive, int id): primitive(primitive), id(id) {}
+  AABB* bounding_box;
+  Vector center;
+
+  _PrimitiveData(Object* primitive, int id): primitive(primitive), id(id) {
+    bounding_box = primitive->bounding_box();
+    center = bounding_box->getCenter();
+  }
 };
 
 
@@ -503,38 +509,32 @@ struct _BHVBuildNode {  // Linear storage
       left = NULL;
       right = NULL;
       primitiveData = list[0];
-      box = *primitiveData->primitive->bounding_box();
-
-    } else if(size == 2){
-      axis = 0;  // TODO: currently dont giving any f
-      left = new _BHVBuildNode(*list[0]->primitive->bounding_box(), NULL, NULL, list[0]);
-      right = new _BHVBuildNode(*list[1]->primitive->bounding_box(), NULL, NULL, list[1]);
+      box = *primitiveData->bounding_box;
 
     } else {
 
-      float axisMin[3];
-      float axisMax[3];
-      for(int i=0 ; i<3 ; i++){
-        axisMin[i] = FLT_MAX;
-        axisMax[i] = -FLT_MAX;
-      }
-      for(_PrimitiveData* primData : list){
-        AABB* primBB = primData->primitive->bounding_box();
-        for(int i=0 ; i<3 ; i++){
-          if(primBB->vmin[i] < axisMin[i])
-            axisMin[i] = primBB->vmin[i];
-          if(primBB->vmax[i] > axisMin[i])
-            axisMax[i] = primBB->vmax[i];
-        }
-      }
-
-      // sort around largest 'global' bounding box axis
       axis = 0;
       float maxAxisDiff = -FLT_MAX;
       for(int i=0 ; i<3 ; i++){
-        float axisDiff = axisMax[i] - axisMin[i];
-        if(axisDiff > maxAxisDiff){
-          maxAxisDiff = axisDiff;
+        float axisMin = FLT_MAX;
+        float axisMax = -FLT_MAX;
+
+        for(_PrimitiveData* primData : list){
+          // center range
+          /* if(primData->center[i] < axisMin) */
+          /*   axisMin = primData->center[i]; */
+          /* if(primData->center[i] > axisMax) */
+          /*   axisMax = primData->center[i]; */
+
+          // bounding boxes min/max
+          if(primData->bounding_box->vmin[i] < axisMin)
+            axisMin = primData->bounding_box->vmin[i];
+          if(primData->bounding_box->vmax[i] > axisMax)
+            axisMax = primData->bounding_box->vmax[i];
+        }
+
+        if(axisMax-axisMin > maxAxisDiff){
+          maxAxisDiff = axisMax-axisMin;
           axis = i;
         }
       }
@@ -544,17 +544,15 @@ struct _BHVBuildNode {  // Linear storage
       /* int axis = int(3*RANDOM_FLOAT); */
       /* int axis = 2; */
       std::sort(list.begin(), list.end(), [this] (_PrimitiveData* a, _PrimitiveData* b) {
-          return (*(b->primitive->bounding_box())).vmin[axis] < (*(a->primitive->bounding_box())).vmin[axis];
+          return (*(b->bounding_box)).vmin[axis] < (*(a->bounding_box)).vmin[axis];
+          /* return b->center[axis] > a->center[axis]; */
       });
 
-      if(size == 3)
-        left = new _BHVBuildNode(*list[0]->primitive->bounding_box(), NULL, NULL, list[0]);  // we want to avoid BHV node with only 1 object
-      else
-        left = new _BHVBuildNode(std::vector<_PrimitiveData*>(list.begin(), list.begin()+size/2), depth+1);
+      left = new _BHVBuildNode(std::vector<_PrimitiveData*>(list.begin(), list.begin()+size/2), depth+1);
       right = new _BHVBuildNode(std::vector<_PrimitiveData*>(list.begin() + size/2, list.begin() + (2*size+1)/2), depth+1);
-    }
 
-    box = left->box & right->box;  // union of both bounding boxes
+      box = left->box & right->box;  // union of both bounding boxes
+    }
   }
 
   int nodeCount(){
