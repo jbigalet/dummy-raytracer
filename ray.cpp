@@ -11,8 +11,15 @@ Vector Ray::color(const Object &obj, int max_bounce) const {
 
   HitRecord hit;
   if(obj.hit(*this, hit)){
+
+    // NaN check in normals
+    /* for(int iaxis=0 ; iaxis<3 ; iaxis++) */
+    /*   if(isnan(hit.normal[iaxis]) || hit.normal[iaxis] < -1.f){ */
+    /*     std::cout << "problem with normal: " << hit.normal << " obj => " << obj.str() << std::endl; */
+    /*   } */
+
     // debug: normal map
-    /* return 0.5*Vector(hit.normal.x+1, hit.normal.y+1, hit.normal.z+1); */
+    return 0.5*(VECTOR_ONE+hit.normal);
 
     Vector attenuation;
     Ray *scattered = hit.material->scatter(*this, hit, attenuation);
@@ -32,8 +39,8 @@ Vector Ray::color(const Object &obj, int max_bounce) const {
   }
 
   // sky
-  float t = 0.5f*(dir.unit().y + 1.0f);
-  return (1.0-t)*VECTOR_ONE + t*Vector(0.5f, 0.7f, 1.0f);
+  /* float t = 0.5f*(dir.unit().y + 1.0f); */
+  /* return (1.0-t)*VECTOR_ONE + t*Vector(0.5f, 0.7f, 1.0f); */
 
   // void
   return VECTOR_ZERO;

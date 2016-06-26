@@ -62,8 +62,8 @@ int main() {
 
   /* int nsamples = 1; */
   /* int nsamples = 4; */
-  /* int nsamples = 20; */
-  int nsamples = 50;
+  int nsamples = 20;
+  /* int nsamples = 50; */
   /* int nsamples = 100; */
   /* int nsamples = 200; */
   /* int nsamples = 500; */
@@ -77,12 +77,6 @@ int main() {
   int max_bounces = 5;
   /* int max_bounces = 10; */
   /* int max_bounces = 100; */
-
-  std::ofstream image;
-  image.open("image.ppm");
-  /* image.open("image_"+std::to_string(nsamples)+".ppm"); */
-
-  image << "P3\n" << width << " " << height << "\n255\n";
 
   // above on the left
   /* Camera camera( */
@@ -105,18 +99,39 @@ int main() {
   /* ); */
 
   // inside the box, looking in front
+  /* Camera camera( */
+  /*     width, */
+  /*     height, */
+  /*     /1* Vector(0, 0, -3.f),  // cow *1/ */
+  /*     Vector(-0.5f, 1.f, -6.f),  // bunny */
+  /*     /1* Vector(0, 0, -3.8f),  // cornell box *1/ */
+  /*     /1* Vector(0, 0, -1.1f), *1/ */
+  /*     Vector(-0.5f, 1.f, 0),  // bunny pos */
+  /*     /1* Vector(0.f, 0.f, 0.f), *1/ */
+  /*     Vector(0, 1, 0), */
+  /*     40 */
+  /*     ); */
+
+  // dragon
   Camera camera(
       width,
       height,
-      /* Vector(0, 0, -3.f),  // cow */
-      Vector(-0.5f, 1.f, -6.f),  // bunny
-      /* Vector(0, 0, -3.8f),  // cornell box */
-      /* Vector(0, 0, -1.1f), */
-      Vector(-0.5f, 1.f, 0),  // bunny pos
-      /* Vector(0.f, 0.f, 0.f), */
+      /* Vector(0.f, 0.1f, -0.4f),  // profile */
+      Vector(-0.2f, 0.3f, -0.3f),  // quarter
+      Vector(0.f, 0.1f, 0),
       Vector(0, 1, 0),
       40
       );
+
+  /* // buddha */
+  /* Camera camera( */
+  /*     width, */
+  /*     height, */
+  /*     Vector(0.f, 0.2f, 0.35f),  // quarter */
+  /*     Vector(0.f, 0.15f, 0), */
+  /*     Vector(0, 1, 0), */
+  /*     40 */
+  /*     ); */
 
   ObjectGroup *world = new ObjectGroup();
 
@@ -232,7 +247,8 @@ int main() {
 
   // obj loading tests
   // http://www.opengl-tutorial.org/beginners-tutorials/tutorial-7-model-loading/
-
+  //
+    auto checkpoint = std::chrono::high_resolution_clock::now();
 
     /* Material* objMat = new Lambertian(new ConstantTexture(0.1f, 0.2f, 0.8f)); */
   Material* objMat = new Metal(new ConstantTexture(0.6f, 0.6f, 0.2f), 0.1f);
@@ -243,9 +259,12 @@ int main() {
   /* std::vector<Vector> texturecoords; */
   std::vector<Vector> faces;  // computed normals indexed by vertices
   std::vector<int> nfaces;  // number of faces by vertices - to average out the normal
+  std::vector<std::array<int, 3>> faceLinks;  // for each face, link to vertice ids
 
   ObjectGroup *obj = new ObjectGroup();
   std::vector<SmoothedTriangle*> tosmooth;
+
+#if 0  // obj loading
 
   /* std::ifstream file("cow.obj"); */
   std::ifstream file("bunny.obj");
@@ -334,28 +353,190 @@ int main() {
         nfaces[A] += 1;
         nfaces[B] += 1;
         nfaces[C] += 1;
+
+        std::array<int, 3> link { {(int)a, (int)b, (int)c} };
+        faceLinks.push_back(link);
       }
 
     }
   }
 
-  // smooth triangles we dont have the normal for
-  for(unsigned int ivertice=0 ; ivertice<vertices.size() ; ivertice++){
-    Vector vertice = vertices[ivertice];
-    Vector norm = faces[ivertice]/nfaces[ivertice];
-    for(SmoothedTriangle* triangle: tosmooth){
-      if(vertice == triangle->a)
-        triangle->na = norm;
-      if(vertice == triangle->b)
-        triangle->nb = norm;
-      if(vertice == triangle->c)
-        triangle->nc = norm;
+#else  // ply loading  -- pretty dumb one
+  // assume the only elements are vertices & faces
+  // + faces are composed of exactly 3 vertices
+  // + ascii format
+
+  std::ifstream file("ply/dragon_recon/dragon_vrip.ply");
+  /* std::ifstream file("ply/dragon_recon/dragon_vrip_res2.ply"); */
+
+  /* std::ifstream file("ply/happy_recon/happy_vrip.ply"); */
+  /* std::ifstream file("ply/happy_recon/happy_vrip_res4.ply"); */
+
+  std::string str;
+
+  long face_count = -1;
+  long vertex_count = -1;
+
+  // read header
+  while(std::getline(file, str)){
+    if(str == "ply")
+      continue;  // ignore
+
+    else if(str.find("format") == 0){
+      assert(str == "format ascii 1.0");  // only format supported atm
+
+    } else if(str.find("element") == 0){
+      if(str.find("element vertex") == 0) {
+        assert(face_count == -1);
+        sscanf(str.c_str(), "element vertex %ld", &vertex_count);
+
+      } else if(str.find("element face") == 0) {
+        assert(vertex_count != -1);
+        sscanf(str.c_str(), "element face %ld", &face_count);
+
+      } else {
+        std::cout << "unknow element type in ply: " << str << std::endl;
+        exit(1);
+      }
+
+
+    } else if(str.find("property") == 0){
+      continue;  // ignore atm - assume vertices are x,y,z floats ; faces as 3 ints
+
+    } else if(str.find("comment") == 0) {
+      continue;  // ignore
+
+    } else if(str == "end_header"){
+      break;
+
+    } else {
+      std::cout << "UNKNOWN LINE IN PLY: " << str << std::endl;
     }
   }
 
-  for(SmoothedTriangle* triangle: tosmooth)
-    obj->add(triangle);
+  std::cout << "PLY header: vertices = " << vertex_count << " ; faces = " << face_count << std::endl;
 
+  std::cout << "PLY header loaded in: " << (std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - checkpoint)).count() << " ms" << std::endl;
+  checkpoint = std::chrono::high_resolution_clock::now();
+
+  vertices.reserve(vertex_count);
+  faces.reserve(vertex_count);
+  nfaces.reserve(vertex_count);
+  faceLinks.reserve(face_count);
+  tosmooth.reserve(face_count);
+
+  std::cout << "PLY struct reservation in: " << (std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - checkpoint)).count() << " ms" << std::endl;
+  checkpoint = std::chrono::high_resolution_clock::now();
+
+  for(int ivertex=0 ; ivertex < vertex_count ; ivertex++){
+    std::getline(file, str);
+    float a, b, c;
+    sscanf(str.c_str(), "%f %f %f", &a, &b, &c);
+    vertices.push_back(Vector(a,b,c));
+
+    faces.push_back(VECTOR_ZERO);
+    nfaces.push_back(0);
+  }
+
+  std::cout << "PLY vertices loaded in: " << (std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - checkpoint)).count() << " ms" << std::endl;
+  checkpoint = std::chrono::high_resolution_clock::now();
+
+  for(int iface=0 ; iface < face_count ; iface++){
+    std::getline(file, str);
+    long a, b, c;
+    sscanf(str.c_str(), "3 %ld %ld %ld", &a, &b, &c);
+
+    /* std::cout << "str \"" << str << "\"  => a: " << a << " b: " << b << " c: " << c << std::endl; */
+
+    assert(a >= 0 && b >= 0 && c >= 0
+        && a < vertex_count
+        && b < vertex_count
+        && c < vertex_count);
+
+    SmoothedTriangle* triangle = new SmoothedTriangle(
+      vertices[a],
+      vertices[b],
+      vertices[c],
+      objMat);
+    tosmooth.push_back(triangle);
+
+    // check for NaN in file
+    /* for(int iaxis=0 ; iaxis<3 ; iaxis++) */
+    /*   if(isnan(triangle->norm[iaxis]) || triangle->norm[iaxis] < -1.01f) */
+    /*     std::cout << "problem in ply file - incorrect normals: " << triangle->norm << " vertices: a=" << vertices[a] << " b=" << vertices[b] << " c= " << vertices[c] << "  indices: (" << a << ", " << b << ", " << c << ")" << std::endl; */
+
+    faces[a] += triangle->norm;
+    faces[b] += triangle->norm;
+    faces[c] += triangle->norm;
+
+    nfaces[a] += 1;
+    nfaces[b] += 1;
+    nfaces[c] += 1;
+
+    std::array<int, 3> link { {(int)a, (int)b, (int)c} };
+    faceLinks.push_back(link);
+  }
+
+  std::cout << "PLY faces loaded in: " << (std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - checkpoint)).count() << " ms" << std::endl;
+  checkpoint = std::chrono::high_resolution_clock::now();
+
+#endif
+
+  file.close();
+
+  int ignoredObj = 0;
+  for(unsigned int iface=0 ; iface<tosmooth.size() ; iface++){
+    SmoothedTriangle* triangle = tosmooth[iface];
+    std::array<int, 3> link = faceLinks[iface];
+    triangle->na = faces[link[0]]/nfaces[link[0]];
+    triangle->nb = faces[link[1]]/nfaces[link[1]];
+    triangle->nc = faces[link[2]]/nfaces[link[2]];
+    /* std::cout << "link: " << link[0] << " " << link[1] << " " << link[2] << std::endl; */
+
+    bool ignoreobj = false;  // if some problem occurs
+    for(int iaxis=0 ; iaxis<3 ; iaxis++){
+      /* bool toignorethis = true; */
+      /* if(nfaces[link[iaxis]] == 0) */
+      /*   std::cout << "problem in ply file: " << link[iaxis] << std::endl; */
+
+      /* else if(isnan(triangle->na[iaxis]) || triangle->na[iaxis] < -1.1f) */
+      /*   std::cout << "problem in ply file: " << faces[link[0]] << std::endl; */
+
+      /* else if(isnan(triangle->nb[iaxis]) || triangle->nb[iaxis] < -1.1f) */
+      /*   std::cout << "problem in ply file: " << faces[link[1]] << std::endl; */
+
+      /* else if(isnan(triangle->nc[iaxis]) || triangle->nc[iaxis] < -1.1f) */
+      /*   std::cout << "problem in ply file: " << faces[link[2]] << std::endl; */
+
+      /* else */
+      /*   toignorethis = false; */
+
+      /* if(toignorethis) */
+      /*   ignoreobj = true; */
+
+      if( !(nfaces[link[iaxis]] != 0
+          && !isnan(triangle->na[iaxis]) && triangle->na[iaxis] > -1.f
+          && !isnan(triangle->nb[iaxis]) && triangle->nb[iaxis] > -1.f
+          && !isnan(triangle->nc[iaxis]) && triangle->nc[iaxis] > -1.f))
+
+        ignoreobj = true;
+    }
+
+    if(!ignoreobj)
+      obj->add(triangle);
+    else
+      ignoredObj++;
+  }
+
+  std::cout << "Triangle smoothing in: " << (std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - checkpoint)).count() << " ms" << std::endl;
+
+  auto fileReadingTime = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double, std::milli> totalFileReadingTime = fileReadingTime - startTime;
+  std::cout << "File loaded in: " << totalFileReadingTime.count() << " ms\n" << std::endl;
+
+  std::cout << "Faces ignored: " << ignoredObj << std::endl;
+  if(ignoredObj > 0)
+    std::cout << "\n=============\n!!!! SOME FACES HAVE BEEN IGNORED!!!\n==========\n" << std::endl;
 
   world = new ObjectGroup();
   world->extend(obj->list);
@@ -367,10 +548,16 @@ int main() {
 
 
   // convert world to a BHV
+  auto bhvStartTime = std::chrono::high_resolution_clock::now();
+
   /* BHV* bhv_world = new BHV(&world->list[0], world->list.size()); */
   const BHV bhv_world(world->list);
+
   std::cout << "Triangle count: " << world->list.size() << std::endl;
   std::cout << "BHV depth: " << bhv_world.depth() << std::endl;
+
+  std::cout << "\nWorld center at: " << bhv_world.bounding_box()->getCenter().str() << std::endl;
+  std::cout << "World bounding box: " << bhv_world.bounding_box()->str() << std::endl;
 
   /* std::cout << bhv_world->str() << std::endl; */
   /* std::cout << bhv_world->bounding_box()->str() << std::endl; */
@@ -378,10 +565,8 @@ int main() {
   /* std::cout << bhv_world->right->bounding_box()->str() << std::endl; */
 
 
-
-
   auto bhvTime = std::chrono::high_resolution_clock::now();
-  std::chrono::duration<double, std::milli> totalBHVtime = bhvTime - startTime;
+  std::chrono::duration<double, std::milli> totalBHVtime = bhvTime - bhvStartTime;
   std::cout << "\nBHV in: " << totalBHVtime.count() << " ms" << std::endl;
   startTime = std::chrono::high_resolution_clock::now();
 
@@ -427,6 +612,12 @@ int main() {
 
 
   // average res & write the image
+  std::ofstream image;
+  image.open("image.ppm");
+  /* image.open("image_"+std::to_string(nsamples)+".ppm"); */
+
+  image << "P3\n" << width << " " << height << "\n255\n";
+
   for(int j=height-1 ; j>=0; j--)
     for(int i=width-1 ; i>=0 ; i--) {
       Vector average = VECTOR_ZERO;
@@ -434,6 +625,16 @@ int main() {
         average += out[ithread][i][j];
       average = average/nthreads;
       int *rgb = average.tone_map().toRGB(2);
+
+      // check for incoherent values
+      for(int iaxis=0 ; iaxis<3 ; iaxis++)
+        if(rgb[iaxis] < 0 || rgb[iaxis] > 255 || isnan(rgb[iaxis])){
+          std::cout << "something's wrong: " << average << std::endl;
+          for(int ithread=0 ; ithread<nthreads ; ithread++)
+            std::cout << "on thread " << ithread << " => " << out[ithread][i][j] << std::endl;
+          rgb[iaxis] = 0;  // =[
+        }
+
       image << rgb[0] << " " << rgb[1] << " " << rgb[2] << "\n";
     }
 

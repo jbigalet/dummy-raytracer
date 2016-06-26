@@ -461,7 +461,6 @@ class SmoothedTriangle : public Triangle {
       // Ray Tracing from the Ground Up p.479
       // u <=> beta, v <=> gamma
 
-      /* return norm; */
       return (
           (1-u-v) * na
           +  u    * nb
@@ -547,7 +546,7 @@ struct _BHVBuildNode {  // Linear storage
       /* int axis = int(3*RANDOM_FLOAT); */
       /* int axis = 2; */
 
-#if 0 // equal count
+#if 1 // equal count
       std::sort(list.begin(), list.end(), [this] (_PrimitiveData* a, _PrimitiveData* b) {
           return (*(b->bounding_box)).vmin[axis] < (*(a->bounding_box)).vmin[axis];
           /* return b->center[axis] > a->center[axis]; */
@@ -660,8 +659,11 @@ class BHV : public Object {  // node
     }
 
     AABB *bounding_box() {
-      /* return &box; */
       return NULL;
+    }
+
+    AABB *bounding_box() const {
+      return &nodes[0].box;  // root's bounding box
     }
 
     bool hit(const Ray& ray, HitRecord &res) const {
