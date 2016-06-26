@@ -43,14 +43,14 @@ int main() {
   /* int height = 1080/8; */
 
   /* int width = 1920/4; */
-  int height = 1080/4;
+  /* int height = 1080/4; */
   /* int height = 50; */
 
   /* int width = 1920/2; */
   /* int height = 1080/2; */
 
   /* int width = 1920; */
-  /* int height = 1080; */
+  int height = 1080;
 
   /* int width = 1200; */
   /* int height = 600; */
@@ -109,11 +109,11 @@ int main() {
       width,
       height,
       /* Vector(0, 0, -3.f),  // cow */
-      /* Vector(-0.5f, 1.f, -6.f),  // bunny */
-      Vector(0, 0, -3.8f),  // cornell box
+      Vector(-0.5f, 1.f, -6.f),  // bunny
+      /* Vector(0, 0, -3.8f),  // cornell box */
       /* Vector(0, 0, -1.1f), */
-      /* Vector(-0.5f, 1.f, 0),  // bunny pos */
-      Vector(0.f, 0.f, 0.f),
+      Vector(-0.5f, 1.f, 0),  // bunny pos
+      /* Vector(0.f, 0.f, 0.f), */
       Vector(0, 1, 0),
       40
       );
@@ -247,8 +247,8 @@ int main() {
   ObjectGroup *obj = new ObjectGroup();
   std::vector<SmoothedTriangle*> tosmooth;
 
-  std::ifstream file("cow.obj");
-  /* std::ifstream file("bunny.obj"); */
+  /* std::ifstream file("cow.obj"); */
+  std::ifstream file("bunny.obj");
   std::string str;
   while (std::getline(file, str)) {
 
@@ -357,7 +357,7 @@ int main() {
     obj->add(triangle);
 
 
-  /* world = new ObjectGroup(); */
+  world = new ObjectGroup();
   world->extend(obj->list);
 
 

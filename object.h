@@ -515,26 +515,29 @@ struct _BHVBuildNode {  // Linear storage
 
       axis = 0;
       float maxAxisDiff = -FLT_MAX;
+      float midpoint = 0;
       for(int i=0 ; i<3 ; i++){
         float axisMin = FLT_MAX;
         float axisMax = -FLT_MAX;
 
         for(_PrimitiveData* primData : list){
-          // center range
-          /* if(primData->center[i] < axisMin) */
-          /*   axisMin = primData->center[i]; */
-          /* if(primData->center[i] > axisMax) */
-          /*   axisMax = primData->center[i]; */
+#if 1    // center range
+          if(primData->center[i] < axisMin)
+            axisMin = primData->center[i];
+          if(primData->center[i] > axisMax)
+            axisMax = primData->center[i];
 
-          // bounding boxes min/max
+#else    // bounding boxes min/max
           if(primData->bounding_box->vmin[i] < axisMin)
             axisMin = primData->bounding_box->vmin[i];
           if(primData->bounding_box->vmax[i] > axisMax)
             axisMax = primData->bounding_box->vmax[i];
+#endif
         }
 
         if(axisMax-axisMin > maxAxisDiff){
           maxAxisDiff = axisMax-axisMin;
+          midpoint = (axisMin+axisMax)/2.f;
           axis = i;
         }
       }
@@ -543,6 +546,8 @@ struct _BHVBuildNode {  // Linear storage
       /* axis = depth%3; */
       /* int axis = int(3*RANDOM_FLOAT); */
       /* int axis = 2; */
+
+#if 0 // equal count
       std::sort(list.begin(), list.end(), [this] (_PrimitiveData* a, _PrimitiveData* b) {
           return (*(b->bounding_box)).vmin[axis] < (*(a->bounding_box)).vmin[axis];
           /* return b->center[axis] > a->center[axis]; */
@@ -550,6 +555,25 @@ struct _BHVBuildNode {  // Linear storage
 
       left = new _BHVBuildNode(std::vector<_PrimitiveData*>(list.begin(), list.begin()+size/2), depth+1);
       right = new _BHVBuildNode(std::vector<_PrimitiveData*>(list.begin() + size/2, list.begin() + (2*size+1)/2), depth+1);
+
+#else  // compare to midpoint
+      std::sort(list.begin(), list.end(), [this] (_PrimitiveData* a, _PrimitiveData* b) {
+          return b->center[axis] > a->center[axis];
+        });
+
+      int midIdx = 0;
+      while(list[midIdx]->center[axis] < midpoint)
+        midIdx++;
+
+      // all centers are the same point workaround
+      if(midIdx == 0)
+        midIdx++;
+
+      /* std::cout << "midIdx: " << midIdx << ", size = " << size << ", midpoint: " << midpoint << ", min: " << list[0]->center[axis] << ", max: " << list[size-1]->center[axis] << std::endl; */
+
+      left = new _BHVBuildNode(std::vector<_PrimitiveData*>(list.begin(), list.begin()+midIdx), depth+1);
+      right = new _BHVBuildNode(std::vector<_PrimitiveData*>(list.begin() + midIdx, list.end()), depth+1);
+#endif
 
       box = left->box & right->box;  // union of both bounding boxes
     }
