@@ -5,7 +5,7 @@
 
 #include "vector.h"
 
-class Object;
+class BHV;
 
 class Ray {
   public:
@@ -31,7 +31,7 @@ class Ray {
 
     Vector point_at_parameter(float t) const { return orig + t*dir; }
 
-    Vector color(const Object &obj, int max_bounce) const;
+    Vector color(const BHV &obj, int max_bounce) const;
 };
 
 #endif /* DEF_RAY */

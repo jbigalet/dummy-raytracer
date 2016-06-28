@@ -610,7 +610,7 @@ struct BHVNode {
 /* } */
 
 
-class BHV : public Object {  // node
+class BHV {  // node
   public:
     BHVNode* nodes;
     std::vector<Object*> primitives;
@@ -719,6 +719,49 @@ class BHV : public Object {  // node
       }
 
       return hit;
+    }
+
+
+    int traversal_count(const Ray& ray) const {
+      int stack[50];  // node position in 'nodes' array
+      int stackPos = 0;
+      int nodeIdx = 0;  // 1st one is the root
+
+      int count = 0;
+
+      while(true) {
+        count++;
+
+        const BHVNode* currentNode = &nodes[nodeIdx];
+        if(currentNode->box.hit(ray)){
+          if(currentNode->nPrimitives != 0) {
+
+            if(stackPos == 0)
+              break;
+            stackPos--;
+            nodeIdx = stack[stackPos];
+
+          } else {
+            if(!ray.sign[currentNode->axis]) {
+              stack[stackPos] = nodeIdx+1;
+              stackPos++;
+              nodeIdx = currentNode->rightNodeIdx;
+            } else {
+              stack[stackPos] = currentNode->rightNodeIdx;
+              stackPos++;
+              nodeIdx++;
+            }
+          }
+
+        } else {
+          if(stackPos == 0)
+            break;
+          stackPos--;
+          nodeIdx = stack[stackPos];
+        }
+      }
+
+      return count;
     }
 
     /* inline std::string str(std::string indent="") const { */

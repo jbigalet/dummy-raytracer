@@ -14,7 +14,7 @@
 #include "camera.h"
 #include "texture.h"
 
-void rt_pass(Camera camera, const Object& world, int width, int height, int startingWidth, int max_bounces, int nsamples, Vector** out) {
+void rt_pass(Camera camera, const BHV& world, int width, int height, int startingWidth, int max_bounces, int nsamples, Vector** out) {
   for(int i=0 ; i<width ; i++){
     /* std::cout << i << std::endl; */
     for(int j=0 ; j<height ; j++)
@@ -50,7 +50,10 @@ int main() {
   /* int height = 1080/2; */
 
   /* int width = 1920; */
-  int height = 1080;
+  /* int height = 1080; */
+
+  int height = 1920;
+  int width = 1080;
 
   /* int width = 1200; */
   /* int height = 600; */
@@ -58,11 +61,11 @@ int main() {
   /* int width = 600; */
   /* int height = 300; */
 
-  int width = height;
+  /* int width = height; */
 
   /* int nsamples = 1; */
-  /* int nsamples = 4; */
-  int nsamples = 20;
+  int nsamples = 4;
+  /* int nsamples = 20; */
   /* int nsamples = 50; */
   /* int nsamples = 100; */
   /* int nsamples = 200; */
@@ -112,27 +115,33 @@ int main() {
   /*     40 */
   /*     ); */
 
+#if 0
+
   // dragon
   Camera camera(
       width,
       height,
-      /* Vector(0.f, 0.1f, -0.4f),  // profile */
+      Vector(0.f, 0.1f, 0.22f),  // profile
       /* Vector(-0.072f, 0.14f, -0.03f),  // quarter zoomed in */
-      Vector(-0.2f, 0.3f, -0.3f),  // quarter
+      /* Vector(-0.2f, 0.2f, -0.2f),  // quarter */
       Vector(0.f, 0.12f, 0),
       Vector(0, 1, 0),
       40
       );
 
+#else
+
   /* // buddha */
-  /* Camera camera( */
-  /*     width, */
-  /*     height, */
-  /*     Vector(0.f, 0.2f, 0.35f),  // quarter */
-  /*     Vector(0.f, 0.15f, 0), */
-  /*     Vector(0, 1, 0), */
-  /*     40 */
-  /*     ); */
+  Camera camera(
+      width,
+      height,
+      Vector(0.f, 0.2f, 0.35f),  // quarter
+      Vector(0.f, 0.15f, 0),
+      Vector(0, 1, 0),
+      40
+      );
+
+#endif
 
   ObjectGroup *world = new ObjectGroup();
 
@@ -369,10 +378,10 @@ int main() {
   // + faces are composed of exactly 3 vertices
   // + ascii format
 
-  std::ifstream file("ply/dragon_recon/dragon_vrip.ply");
+  /* std::ifstream file("ply/dragon_recon/dragon_vrip.ply"); */
   /* std::ifstream file("ply/dragon_recon/dragon_vrip_res2.ply"); */
 
-  /* std::ifstream file("ply/happy_recon/happy_vrip.ply"); */
+  std::ifstream file("ply/happy_recon/happy_vrip.ply");
   /* std::ifstream file("ply/happy_recon/happy_vrip_res4.ply"); */
 
   std::string str;
@@ -573,7 +582,7 @@ int main() {
   const BHV bhv_world(world->list);
 
   std::cout << "Triangle count: " << world->list.size() << std::endl;
-  std::cout << "BHV depth: " << bhv_world.depth() << std::endl;
+  /* std::cout << "BHV depth: " << bhv_world.depth() << std::endl; */
 
   std::cout << "\nWorld center at: " << bhv_world.bounding_box()->getCenter().str() << std::endl;
   std::cout << "World bounding box: " << bhv_world.bounding_box()->str() << std::endl;
@@ -629,6 +638,7 @@ int main() {
   for(int ithread=0 ; ithread<nthreads ; ithread++)
     threads[ithread].join();
 
+  auto endTime = std::chrono::high_resolution_clock::now();
 
   // average res & write the image
   std::ofstream image;
@@ -637,14 +647,35 @@ int main() {
 
   image << "P3\n" << width << " " << height << "\n255\n";
 
+  // debug: bhv traversal count
+  // compute maximum to display the right color panel
+#if BHV_TRAVERSAL_COUNT
+  int max_traversal = 0;
+  long double average_traversal = 0.f;
+  for(int j=height-1 ; j>=0; j--)
+    for(int i=width-1 ; i>=0 ; i--)
+      for(int ithread=0 ; ithread<nthreads ; ithread++){
+        if(out[ithread][i][j].x > max_traversal)
+           max_traversal = out[ithread][i][j].x;
+        average_traversal += out[ithread][i][j].x;
+      }
+
+  std::cout << "max traversal: " << max_traversal << std::endl;
+  std::cout << "average direct traversal: " << (average_traversal/totalDirectRay) << std::endl;
+#endif
+
   for(int j=height-1 ; j>=0; j--)
     for(int i=width-1 ; i>=0 ; i--) {
       Vector average = VECTOR_ZERO;
       for(int ithread=0 ; ithread<nthreads ; ithread++)
         average += out[ithread][i][j];
       average = average/nthreads;
-      int *rgb = average.tone_map().toRGB(2);
 
+#if BHV_TRAVERSAL_COUNT
+      int *rgb = (average/max_traversal).toRGB(2);
+#else
+      int *rgb = average.tone_map().toRGB(2);
+#endif
       // check for incoherent values
       for(int iaxis=0 ; iaxis<3 ; iaxis++)
         if(rgb[iaxis] < 0 || rgb[iaxis] > 255 || isnan(rgb[iaxis])){
@@ -659,7 +690,6 @@ int main() {
 
   image.close();
 
-  auto endTime = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double, std::milli> totalTime = endTime - startTime;
   std::cout << "\n\nTotal: " << totalTime.count() << " ms" << std::endl;
   std::cout << "\nTriangle intersections: " << nTriangleIntersection/1000000.f << "M" << std::endl;

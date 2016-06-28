@@ -3,11 +3,17 @@
 #include "object.h"
 #include "stats.h"
 
-Vector Ray::color(const Object &obj, int max_bounce) const {
+Vector Ray::color(const BHV &obj, int max_bounce) const {
   nTotalRay++;  // @stats
 
   if(max_bounce == 0)
     return VECTOR_ZERO;
+
+#if BHV_TRAVERSAL_COUNT
+  // debug: bhv traversal count
+  int count = obj.traversal_count(*this);
+  return VECTOR_ONE*count;
+#endif
 
   HitRecord hit;
   if(obj.hit(*this, hit)){
@@ -19,7 +25,7 @@ Vector Ray::color(const Object &obj, int max_bounce) const {
     /*   } */
 
     // debug: normal map
-    /* return 0.5*(VECTOR_ONE+hit.normal); */
+    return 0.5*(VECTOR_ONE+hit.normal);
 
     Vector attenuation;
     Ray *scattered = hit.material->scatter(*this, hit, attenuation);

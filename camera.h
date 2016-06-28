@@ -39,7 +39,7 @@ class Camera {
       return Ray(orig, lower_left_corner + u*hor + v*ver - orig);
     }
 
-    Vector getColor(const Object &obj, int x, int y, int max_bounce, int nsamples){
+    Vector getColor(const BHV &obj, int x, int y, int max_bounce, int nsamples){
       Vector color = VECTOR_ZERO;
       for(int i=0 ; i<nsamples ; i++){
         const Ray ray = getRay(

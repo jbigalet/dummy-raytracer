@@ -6,6 +6,8 @@ CXXFLAGS=-g -std=c++11 -lpthread -Wall -Ofast -march=native -flto -fomit-frame-p
 # CXXFLAGS=-g -std=c++11 -lpthread -Wall -O3
 # CXXFLAGS=-g -std=c++11 -lpthread -Wall -O3 -march=native -flto
 # CXXFLAGS=-g -lpthread -std=c++11 -Wall -O2
+#
+CXXFLAGS=-g -std=c++11 -lpthread -Wall -Ofast -march=native -flto -fomit-frame-pointer -DBHV_TRAVERSAL_COUNT
 
 BIN=bin/raytracer
 
