@@ -386,6 +386,11 @@ class Triangle: public Object {
       e1 = b - a;
       e2 = c - a;
       norm = (e1*e2).unit();
+
+      // check normals
+      /* for(int i=0 ; i<3 ; i++) */
+      /*   if(isnan(norm[i]) || norm[i] < -1.1f) */
+      /*     std::cout << "normal problem on triangle: " << str() << std::endl; */
     }
 
     AABB* bounding_box() {
@@ -439,7 +444,10 @@ class Triangle: public Object {
       return indent + "Triangle:\n"
              + indent + "  " + a.str() + ",\n"
              + indent + "  " + b.str() + ",\n"
-             + indent + "  " + c.str() + "\n";
+             + indent + "  " + c.str() + ",\n"
+             + indent + "  e1: " + e1.str() + ",\n"
+             + indent + "  e2: " + e2.str() + ",\n"
+             + indent + "  norm: " + norm.str() + "\n";
     }
 };
 
@@ -461,6 +469,7 @@ class SmoothedTriangle : public Triangle {
       // Ray Tracing from the Ground Up p.479
       // u <=> beta, v <=> gamma
 
+      /* return norm;  // unsmmothed triangles */
       return (
           (1-u-v) * na
           +  u    * nb

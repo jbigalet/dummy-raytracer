@@ -1,5 +1,5 @@
-# CXX=g++
-CXX=clang++
+CXX=g++
+# CXX=clang++
 # CXXFLAGS=-g -std=c++11 -lpthread -Wall -Ofast -march=native -flto
 CXXFLAGS=-g -std=c++11 -lpthread -Wall -Ofast -march=native -flto -fomit-frame-pointer
 # CXXFLAGS=-g -std=c++11 -lpthread -Wall -O2 -march=native

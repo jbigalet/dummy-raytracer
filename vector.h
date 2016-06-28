@@ -104,6 +104,16 @@ class Vector {
       exit(1);
     }
 
+    inline float & operator[] (int i) {
+      if(i==0) return x;
+      if(i==1) return y;
+      if(i==2) return z;
+
+      // should not happen - to avoid Wall bitching about it
+      std::cerr << "trying to access vector at index " << i << std::endl;
+      exit(1);
+    }
+
     inline bool operator==(const Vector &v) const {
       return x == v.x
           && y == v.y

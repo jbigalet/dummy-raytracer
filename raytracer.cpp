@@ -29,9 +29,9 @@ int main() {
 
   auto startTime = std::chrono::high_resolution_clock::now();
 
-  int nthreads = 1;
+  /* int nthreads = 1; */
   /* int nthreads = 2; */
-  /* int nthreads = 4; */
+  int nthreads = 4;
 
   /* int width = 400; */
   /* int height = 200; */
@@ -117,8 +117,9 @@ int main() {
       width,
       height,
       /* Vector(0.f, 0.1f, -0.4f),  // profile */
+      /* Vector(-0.072f, 0.14f, -0.03f),  // quarter zoomed in */
       Vector(-0.2f, 0.3f, -0.3f),  // quarter
-      Vector(0.f, 0.1f, 0),
+      Vector(0.f, 0.12f, 0),
       Vector(0, 1, 0),
       40
       );
@@ -250,19 +251,21 @@ int main() {
   //
     auto checkpoint = std::chrono::high_resolution_clock::now();
 
-    /* Material* objMat = new Lambertian(new ConstantTexture(0.1f, 0.2f, 0.8f)); */
-  Material* objMat = new Metal(new ConstantTexture(0.6f, 0.6f, 0.2f), 0.1f);
+    Material* objMat = new Lambertian(new ConstantTexture(0.1f, 0.2f, 0.8f));
+  /* Material* objMat = new Metal(new ConstantTexture(0.6f, 0.6f, 0.2f), 0.1f); */
   /* Material* objMat = new Light(new ConstantTexture(0.1f, 0.1f, 0.8f)); */
 
   std::vector<Vector> vertices;
   std::vector<Vector> normals;
   /* std::vector<Vector> texturecoords; */
-  std::vector<Vector> faces;  // computed normals indexed by vertices
+  std::vector<std::array<long double, 3>> faces;  // computed normals indexed by vertices
   std::vector<int> nfaces;  // number of faces by vertices - to average out the normal
   std::vector<std::array<int, 3>> faceLinks;  // for each face, link to vertice ids
 
   ObjectGroup *obj = new ObjectGroup();
   std::vector<SmoothedTriangle*> tosmooth;
+
+  int ignoredObj = 0;
 
 #if 0  // obj loading
 
@@ -422,8 +425,8 @@ int main() {
   vertices.reserve(vertex_count);
   faces.reserve(vertex_count);
   nfaces.reserve(vertex_count);
-  faceLinks.reserve(face_count);
-  tosmooth.reserve(face_count);
+  /* faceLinks.reserve(face_count); */
+  /* tosmooth.reserve(face_count); */
 
   std::cout << "PLY struct reservation in: " << (std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - checkpoint)).count() << " ms" << std::endl;
   checkpoint = std::chrono::high_resolution_clock::now();
@@ -434,7 +437,7 @@ int main() {
     sscanf(str.c_str(), "%f %f %f", &a, &b, &c);
     vertices.push_back(Vector(a,b,c));
 
-    faces.push_back(VECTOR_ZERO);
+    faces.push_back( {{0.L, 0.L, 0.L}} );
     nfaces.push_back(0);
   }
 
@@ -458,23 +461,32 @@ int main() {
       vertices[b],
       vertices[c],
       objMat);
-    tosmooth.push_back(triangle);
 
     // check for NaN in file
-    /* for(int iaxis=0 ; iaxis<3 ; iaxis++) */
-    /*   if(isnan(triangle->norm[iaxis]) || triangle->norm[iaxis] < -1.01f) */
-    /*     std::cout << "problem in ply file - incorrect normals: " << triangle->norm << " vertices: a=" << vertices[a] << " b=" << vertices[b] << " c= " << vertices[c] << "  indices: (" << a << ", " << b << ", " << c << ")" << std::endl; */
+    bool toignore = false;
+    for(int iaxis=0 ; iaxis<3 ; iaxis++)
+      if(isnan(triangle->norm[iaxis]) || triangle->norm[iaxis] < -1.1f) {
+        toignore = true;
+        /* std::cout << "problem in ply file - incorrect normals: " << triangle->norm << " vertices: a=" << vertices[a] << " b=" << vertices[b] << " c= " << vertices[c] << "  indices: (" << a << ", " << b << ", " << c << ")" << std::endl; */
+      }
 
-    faces[a] += triangle->norm;
-    faces[b] += triangle->norm;
-    faces[c] += triangle->norm;
+    if(!toignore) {
+      long axis[] = {a, b, c};
+      for(long axes : axis){
+        for(int i=0 ; i<3 ; i++)
+          faces[axes][i] += (long double) triangle->norm[i];
 
-    nfaces[a] += 1;
-    nfaces[b] += 1;
-    nfaces[c] += 1;
+        nfaces[axes] += 1;
+      }
 
-    std::array<int, 3> link { {(int)a, (int)b, (int)c} };
-    faceLinks.push_back(link);
+      tosmooth.push_back(triangle);
+
+      std::array<int, 3> link { {(int)a, (int)b, (int)c} };
+      faceLinks.push_back(link);
+
+    } else {
+      ignoredObj++;
+    }
   }
 
   std::cout << "PLY faces loaded in: " << (std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - checkpoint)).count() << " ms" << std::endl;
@@ -482,15 +494,23 @@ int main() {
 
 #endif
 
+  if(ignoredObj > 0)
+    std::cout << "\n=============\n!!!! " << ignoredObj << " FACES HAVE BEEN IGNORED ON THE 1st PASS!!!\n==========\n" << std::endl;
+
+  int secondPassIgnoredObj = 0;
+
   file.close();
 
-  int ignoredObj = 0;
-  for(unsigned int iface=0 ; iface<tosmooth.size() ; iface++){
+  for(unsigned int iface=0 ; iface<face_count-ignoredObj ; iface++){
     SmoothedTriangle* triangle = tosmooth[iface];
     std::array<int, 3> link = faceLinks[iface];
-    triangle->na = faces[link[0]]/nfaces[link[0]];
-    triangle->nb = faces[link[1]]/nfaces[link[1]];
-    triangle->nc = faces[link[2]]/nfaces[link[2]];
+
+    for(int iaxes = 0 ; iaxes<3 ; iaxes++){
+      triangle->na[iaxes] = float( faces[link[0]][iaxes] / nfaces[link[0]] );
+      triangle->nb[iaxes] = float( faces[link[1]][iaxes] / nfaces[link[1]] );
+      triangle->nc[iaxes] = float( faces[link[2]][iaxes] / nfaces[link[2]] );
+    }
+
     /* std::cout << "link: " << link[0] << " " << link[1] << " " << link[2] << std::endl; */
 
     bool ignoreobj = false;  // if some problem occurs
@@ -525,7 +545,7 @@ int main() {
     if(!ignoreobj)
       obj->add(triangle);
     else
-      ignoredObj++;
+      secondPassIgnoredObj++;
   }
 
   std::cout << "Triangle smoothing in: " << (std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - checkpoint)).count() << " ms" << std::endl;
@@ -534,9 +554,8 @@ int main() {
   std::chrono::duration<double, std::milli> totalFileReadingTime = fileReadingTime - startTime;
   std::cout << "File loaded in: " << totalFileReadingTime.count() << " ms\n" << std::endl;
 
-  std::cout << "Faces ignored: " << ignoredObj << std::endl;
-  if(ignoredObj > 0)
-    std::cout << "\n=============\n!!!! SOME FACES HAVE BEEN IGNORED!!!\n==========\n" << std::endl;
+  if(secondPassIgnoredObj > 0)
+    std::cout << "\n=============\n!!!! " << secondPassIgnoredObj  << " FACES HAVE BEEN IGNORED ON 2nd PASS!!!\n==========\n" << std::endl;
 
   world = new ObjectGroup();
   world->extend(obj->list);
