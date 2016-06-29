@@ -56,7 +56,11 @@ class AABB {
     Vector vmin;
     Vector vmax;
 
-    AABB() {};
+    AABB() {
+      vmin = VECTOR_MAX;
+      vmax = VECTOR_MIN;
+    };
+
     AABB(Vector vmin, Vector vmax): vmin(vmin), vmax(vmax) {}
 
     inline AABB operator&(const AABB &box) {
@@ -90,6 +94,13 @@ class AABB {
 
     inline const Vector getCenter() const {
       return (vmin+vmax)/2.f;
+    }
+
+    inline float surface() const {
+      Vector size = vmax - vmin;
+      return 2.f * (size.x*size.y
+                  + size.y*size.z
+                  + size.z*size.x);
     }
 
     bool hit(const Ray& ray, HitRecord &res) const {
@@ -481,11 +492,10 @@ class SmoothedTriangle : public Triangle {
 
 struct _PrimitiveData {
   Object* primitive;
-  int id;
   AABB* bounding_box;
   Vector center;
 
-  _PrimitiveData(Object* primitive, int id): primitive(primitive), id(id) {
+  _PrimitiveData(Object* primitive): primitive(primitive) {
     bounding_box = primitive->bounding_box();
     center = bounding_box->getCenter();
   }
@@ -496,31 +506,37 @@ struct _BHVBuildNode {  // Linear storage
   AABB box;
   _BHVBuildNode* left;
   _BHVBuildNode* right;
-  _PrimitiveData* primitiveData;
+  std::vector<_PrimitiveData*> primitiveData;
 
   int axis;
 
-  _BHVBuildNode(AABB box, _BHVBuildNode* left, _BHVBuildNode* right, _PrimitiveData* primitiveData=NULL):
+  _BHVBuildNode(AABB box, _BHVBuildNode* left, _BHVBuildNode* right, std::vector<_PrimitiveData*> primitiveData=std::vector<_PrimitiveData*>()):
     box(box), left(left), right(right), primitiveData(primitiveData) {}
 
   _BHVBuildNode(std::vector<_PrimitiveData*> list, int depth=0) {
     int size = list.size();
 
-    primitiveData = NULL;
+    /* std::cout << "bhvBuildNode init: size = " << size << std::endl; */
+
+    primitiveData = std::vector<_PrimitiveData*>();
 
     if(size < 1){
       std::cerr << "BHV init: should not have less than 1 object" << std::endl;
       exit(1);
     }
 
-    if(size == 1){
+    if(size <= 4){
       left = NULL;
       right = NULL;
-      primitiveData = list[0];
-      box = *primitiveData->bounding_box;
+      box = AABB();
+      for(_PrimitiveData* pd: list) {
+        primitiveData.push_back(pd);
+        box = box & *pd->bounding_box;
+      }
 
     } else {
 
+#if BHV_NO_SAH
       axis = 0;
       float maxAxisDiff = -FLT_MAX;
       float midpoint = 0;
@@ -584,11 +600,81 @@ struct _BHVBuildNode {  // Linear storage
 #endif
 
       box = left->box & right->box;  // union of both bounding boxes
+
+#else  // not BHV_NO_SAH
+
+      axis = 0;  // best axis
+      std::vector<_PrimitiveData*> bestLeftCut, bestRightCut;
+      float minCost = FLT_MAX;  // min cost for best cut
+
+      for(int axes=0 ; axes<3 ; axes++){
+
+        // sort around current axis
+        std::sort(list.begin(), list.end(), [axes] (_PrimitiveData* a, _PrimitiveData* b) {
+          /* return (*(b->bounding_box)).vmin[axes] < (*(a->bounding_box)).vmin[axes]; */
+          return b->center[axes] > a->center[axes];
+        });
+
+        // cut BEFORE i. so range from 1 to size-1
+
+        AABB currentBox;
+        float leftSurface[size];
+        for(int i=1 ; i<size ; i++){
+          currentBox = currentBox & *list[i-1]->bounding_box;
+          leftSurface[i] = currentBox.surface();
+        }
+
+        int bestCutOffset = -1;
+
+        currentBox = AABB();
+        for(int i=size-1 ; i>=1 ; i--){
+          currentBox = currentBox & *list[i]->bounding_box;
+          float totalCost = i*leftSurface[i] + (size-i)*currentBox.surface();
+          if(totalCost < minCost){
+            axis = axes;
+            minCost = totalCost;
+            bestCutOffset = i;
+          }
+        }
+
+        // i assume its ok to do max 4 avoidable vector allocation vs having to re-sort the list
+        // => atm we keep the current best offset until the end of the inner axis loop, then compute both children
+        // we could also only keep the offset & only compute the final children at the end, but we would need to sort again the list for the minimal costing axis
+        // or we would be dumb (again) & do 2 alloc each time we reach a new minimum
+        if(bestCutOffset != -1){
+          bestLeftCut = std::vector<_PrimitiveData*>(list.begin(), list.begin()+bestCutOffset);
+          bestRightCut = std::vector<_PrimitiveData*>(list.begin()+bestCutOffset, list.end());
+        }
+      }
+
+      // minCost = n(left)*s(left) + n(right)*s(right)
+      // cost = i(AABB) +  i(primitive)*minCost/s(total)
+      // cost < n(total)*i(primitive) => split, else dont
+      //
+      // assume i(AABB) = 1/8 and i(primitive) = 1  TODO better
+
+
+      left = new _BHVBuildNode(bestLeftCut);
+      right = new _BHVBuildNode(bestRightCut);
+      box = left->box & right->box;
+      float cost = 1.f/8.f + 1.f * minCost/box.surface();
+
+      if( cost >= size*1.f ){  // dont split
+        left = NULL;
+        right = NULL;
+        box = AABB();
+        for(_PrimitiveData* pd: list) {
+          primitiveData.push_back(pd);
+          box = box & *pd->bounding_box;
+        }
+      }  // else do split  -- already done at this point
+
+#endif  // BHV_NO_SAH
     }
   }
 
   int nodeCount(){
-    return primitiveData != NULL ? 1 : 1 + left->nodeCount() + right->nodeCount();
+    return primitiveData.size() > 0 ? primitiveData.size() : 1 + left->nodeCount() + right->nodeCount();
   }
 };
 
@@ -619,11 +705,8 @@ class BHV {  // node
       std::cout << "BHV construction: constructing primitive datas..." << std::endl;
       std::vector<_PrimitiveData*> data;
       data.reserve(list.size());
-      primitives.reserve(list.size());
-      for (std::size_t i = 0 ; i < list.size() ; i++) {
-        data.push_back(new _PrimitiveData(list[i], i));
-        primitives.push_back(list[i]);
-      }
+      for (std::size_t i = 0 ; i < list.size() ; i++)
+        data.push_back(new _PrimitiveData(list[i]));
 
       std::cout << "BHV construction: first pass..." << std::endl;
       _BHVBuildNode* root = new _BHVBuildNode(data);
@@ -652,9 +735,11 @@ class BHV {  // node
       BHVNode* compactNode = &nodes[currentOffset];
       compactNode->box = node->box;
 
-      if(node->primitiveData != NULL) {
-        compactNode->nPrimitives = 1;
-        compactNode->primitiveIdx = node->primitiveData->id;
+      if(node->primitiveData.size() != 0) {
+        compactNode->nPrimitives = node->primitiveData.size();
+        compactNode->primitiveIdx = primitives.size();
+        for(_PrimitiveData* pd: node->primitiveData)
+          primitives.push_back(pd->primitive);
 
       } else {  // dfs
         compactNode->nPrimitives = 0;
@@ -690,8 +775,9 @@ class BHV {  // node
           /* std::cout << "hit " << box.str() << " with " << ray.orig << " - dir " << ray.dir << std::endl; */
 
           if(currentNode->nPrimitives != 0) {
-            if(primitives[currentNode->primitiveIdx]->hit(ray, res))
-              hit = true;
+            for(int iprim=0 ; iprim<currentNode->nPrimitives ; iprim++)
+              if(primitives[currentNode->primitiveIdx+iprim]->hit(ray, res))
+                hit = true;
 
             if(stackPos == 0)
               break;
@@ -735,6 +821,7 @@ class BHV {  // node
         const BHVNode* currentNode = &nodes[nodeIdx];
         if(currentNode->box.hit(ray)){
           if(currentNode->nPrimitives != 0) {
+            /* count += currentNode->nPrimitives; */
 
             if(stackPos == 0)
               break;

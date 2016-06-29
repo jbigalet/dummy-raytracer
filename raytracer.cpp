@@ -64,8 +64,8 @@ int main() {
   /* int width = height; */
 
   /* int nsamples = 1; */
-  int nsamples = 4;
-  /* int nsamples = 20; */
+  /* int nsamples = 4; */
+  int nsamples = 20;
   /* int nsamples = 50; */
   /* int nsamples = 100; */
   /* int nsamples = 200; */
@@ -660,7 +660,7 @@ int main() {
         average_traversal += out[ithread][i][j].x;
       }
 
-  std::cout << "max traversal: " << max_traversal << std::endl;
+  std::cout << "\nmax traversal: " << max_traversal << std::endl;
   std::cout << "average direct traversal: " << (average_traversal/totalDirectRay) << std::endl;
 #endif
 

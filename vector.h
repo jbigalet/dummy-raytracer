@@ -10,6 +10,9 @@
 #define VECTOR_ZERO Vector(0,0,0)
 #define VECTOR_ONE Vector(1,1,1)
 
+#define VECTOR_MIN Vector(-FLT_MAX, -FLT_MAX, -FLT_MAX)
+#define VECTOR_MAX Vector(FLT_MAX, FLT_MAX, FLT_MAX)
+
 class Vector {
   public:
     float x, y, z;
