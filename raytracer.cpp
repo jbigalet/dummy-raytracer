@@ -29,9 +29,9 @@ int main() {
 
   auto startTime = std::chrono::high_resolution_clock::now();
 
-  /* int nthreads = 1; */
+  int nthreads = 1;
   /* int nthreads = 2; */
-  int nthreads = 4;
+  /* int nthreads = 4; */
 
   /* int width = 400; */
   /* int height = 200; */
@@ -50,10 +50,10 @@ int main() {
   /* int height = 1080/2; */
 
   /* int width = 1920; */
-  /* int height = 1080; */
+  int height = 1080;
 
-  int height = 1920;
-  int width = 1080;
+  /* int height = 1920; */
+  /* int width = 1080; */
 
   /* int width = 1200; */
   /* int height = 600; */
@@ -61,7 +61,7 @@ int main() {
   /* int width = 600; */
   /* int height = 300; */
 
-  /* int width = height; */
+  int width = height;
 
   /* int nsamples = 1; */
   /* int nsamples = 4; */
@@ -102,18 +102,18 @@ int main() {
   /* ); */
 
   // inside the box, looking in front
-  /* Camera camera( */
-  /*     width, */
-  /*     height, */
-  /*     /1* Vector(0, 0, -3.f),  // cow *1/ */
-  /*     Vector(-0.5f, 1.f, -6.f),  // bunny */
-  /*     /1* Vector(0, 0, -3.8f),  // cornell box *1/ */
-  /*     /1* Vector(0, 0, -1.1f), *1/ */
-  /*     Vector(-0.5f, 1.f, 0),  // bunny pos */
-  /*     /1* Vector(0.f, 0.f, 0.f), *1/ */
-  /*     Vector(0, 1, 0), */
-  /*     40 */
-  /*     ); */
+  Camera camera(
+      width,
+      height,
+      /* Vector(0, 0, -3.f),  // cow */
+      /* Vector(-0.5f, 1.f, -6.f),  // bunny */
+      Vector(0, 0, -3.8f),  // cornell box
+      /* Vector(0, 0, -1.1f), */
+      /* Vector(-0.5f, 1.f, 0),  // bunny pos */
+      Vector(0.f, 0.f, 0.f),
+      Vector(0, 1, 0),
+      40
+      );
 
 #if 0
 
@@ -129,7 +129,7 @@ int main() {
       40
       );
 
-#else
+#elif 0
 
   /* // buddha */
   Camera camera(
@@ -276,10 +276,10 @@ int main() {
 
   int ignoredObj = 0;
 
-#if 0  // obj loading
+#if 1  // obj loading
 
-  /* std::ifstream file("cow.obj"); */
-  std::ifstream file("bunny.obj");
+  std::ifstream file("cow.obj");
+  /* std::ifstream file("bunny.obj"); */
   std::string str;
   while (std::getline(file, str)) {
 
@@ -291,7 +291,7 @@ int main() {
       sscanf(str.c_str(), "v %f %f %f", &a, &b, &c);
       vertices.push_back(Vector(a, b, c));
 
-      faces.push_back(VECTOR_ZERO);
+      faces.push_back( {{0.L, 0.L, 0.L}} );
       nfaces.push_back(0);
 
     // vertice normals
@@ -358,13 +358,13 @@ int main() {
              objMat);
         tosmooth.push_back(triangle);
 
-        faces[A] += triangle->norm;
-        faces[B] += triangle->norm;
-        faces[C] += triangle->norm;
+        long axis[] = {a, b, c};
+        for(long axes : axis){
+          for(int i=0 ; i<3 ; i++)
+            faces[axes][i] += (long double) triangle->norm[i];
 
-        nfaces[A] += 1;
-        nfaces[B] += 1;
-        nfaces[C] += 1;
+          nfaces[axes] += 1;
+        }
 
         std::array<int, 3> link { {(int)a, (int)b, (int)c} };
         faceLinks.push_back(link);
@@ -373,15 +373,17 @@ int main() {
     }
   }
 
+  long face_count = faces.size();
+
 #else  // ply loading  -- pretty dumb one
   // assume the only elements are vertices & faces
   // + faces are composed of exactly 3 vertices
   // + ascii format
 
-  /* std::ifstream file("ply/dragon_recon/dragon_vrip.ply"); */
+  std::ifstream file("ply/dragon_recon/dragon_vrip.ply");
   /* std::ifstream file("ply/dragon_recon/dragon_vrip_res2.ply"); */
 
-  std::ifstream file("ply/happy_recon/happy_vrip.ply");
+  /* std::ifstream file("ply/happy_recon/happy_vrip.ply"); */
   /* std::ifstream file("ply/happy_recon/happy_vrip_res4.ply"); */
 
   std::string str;
@@ -566,7 +568,7 @@ int main() {
   if(secondPassIgnoredObj > 0)
     std::cout << "\n=============\n!!!! " << secondPassIgnoredObj  << " FACES HAVE BEEN IGNORED ON 2nd PASS!!!\n==========\n" << std::endl;
 
-  world = new ObjectGroup();
+  /* world = new ObjectGroup(); */
   world->extend(obj->list);
 
 

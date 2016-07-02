@@ -7,9 +7,9 @@ CXX=g++
 # CXXFLAGS=-g -std=c++11 -lpthread -Wall -O3 -march=native -flto
 # CXXFLAGS=-g -lpthread -std=c++11 -Wall -O2
 
-# CXXFLAGS=-g -std=c++11 -lpthread -Wall -Ofast -march=native -flto -fomit-frame-pointer
+CXXFLAGS=-g -std=c++11 -lpthread -Wall -Ofast -march=native -flto -fomit-frame-pointer
 # CXXFLAGS=-g -std=c++11 -lpthread -Wall -Ofast -march=native -flto -fomit-frame-pointer -DBHV_NO_SAH
-CXXFLAGS=-g -std=c++11 -lpthread -Wall -Ofast -march=native -flto -fomit-frame-pointer -DBHV_TRAVERSAL_COUNT
+# CXXFLAGS=-g -std=c++11 -lpthread -Wall -Ofast -march=native -flto -fomit-frame-pointer -DBHV_TRAVERSAL_COUNT
 # CXXFLAGS=-g -std=c++11 -lpthread -Wall -Ofast -march=native -flto -fomit-frame-pointer -DBHV_TRAVERSAL_COUNT -DBHV_NO_SAH
 
 BIN=bin/raytracer

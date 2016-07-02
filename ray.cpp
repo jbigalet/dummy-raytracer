@@ -25,7 +25,7 @@ Vector Ray::color(const BHV &obj, int max_bounce) const {
     /*   } */
 
     // debug: normal map
-    return 0.5*(VECTOR_ONE+hit.normal);
+    /* return 0.5*(VECTOR_ONE+hit.normal); */
 
     Vector attenuation;
     Ray *scattered = hit.material->scatter(*this, hit, attenuation);
@@ -45,9 +45,9 @@ Vector Ray::color(const BHV &obj, int max_bounce) const {
   }
 
   // sky
-  float t = 0.5f*(dir.unit().y + 1.0f);
-  /* return (1.0-t)*VECTOR_ONE + t*Vector(0.5f, 0.7f, 1.0f); */
-  return (1.0-t)*VECTOR_ONE;
+  /* float t = 0.5f*(dir.unit().y + 1.0f); */
+  /* /1* return (1.0-t)*VECTOR_ONE + t*Vector(0.5f, 0.7f, 1.0f); *1/ */
+  /* return (1.0-t)*VECTOR_ONE; */
 
   // void
   return VECTOR_ZERO;
